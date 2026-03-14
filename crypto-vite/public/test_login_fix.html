@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: #fff; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 20px; background: #2a2a2a; border-radius: 8px; }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .info { color: #2196F3; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .url-box { background: #333; padding: 10px; border-radius: 4px; word-break: break-all; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Login Component Fix Test</h1>
+        
+        <div class="section">
+            <h2>Issue Fixed</h2>
+            <p class="success">✅ Fixed: "loading is not defined" error in Login.jsx</p>
+            <p>The missing `loading` variable has been added to the AuthContext destructuring.</p>
+        </div>
+
+        <div class="section">
+            <h2>Test OAuth Immediate Redirect</h2>
+            <p>Click the button below to test the immediate redirect functionality:</p>
+            <button onclick="testImmediateRedirect()">Test Immediate Redirect</button>
+            <p class="info">This should redirect you to the dashboard immediately without requiring a page refresh.</p>
+        </div>
+
+        <div class="section">
+            <h2>Manual Test URLs</h2>
+            <p>You can also test these URLs directly:</p>
+            
+            <h3>1. Login Page</h3>
+            <div class="url-box">
+                <a href="/login" style="color: #007bff;">http://localhost:5175/login</a>
+            </div>
+            
+            <h3>2. OAuth Callback Test</h3>
+            <div class="url-box">
+                <a href="/login?auth_success=true&token=85%7CNg2qMmtdIMIrnGmrtUy5GfkjGYtKVsBa7apfYoo15f6161e7&user=eyJpZCI6MjAsIm5hbWUiOiJBc2hlbmFmaSBBc2h1IiwiZW1haWwiOiJhc2hlbmFmaTE0MjY0QGdtYWlsLmNvbSIsImF2YXRhciI6Imh0dHBzOlwvXC9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tXC9hXC9BQ2c4b2NMTEJwRERENHVuY3BGb3dtME5mYU9rS2NhNmlBZEsyTUU2a2FqTHNheXpwS1JZa2c9czk2LWMiLCJpc19hZG1pbiI6ZmFsc2V9" style="color: #007bff;">OAuth Callback Test</a>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Expected Behavior</h2>
+            <ul>
+                <li>✅ Login page should load without JavaScript errors</li>
+                <li>✅ OAuth callback should redirect immediately to dashboard</li>
+                <li>✅ No page refresh should be required</li>
+                <li>✅ Authentication state should be set properly</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Real OAuth Flow Test</h2>
+            <p>To test the complete OAuth flow:</p>
+            <ol>
+                <li>Go to <a href="/login" style="color: #007bff;">/login</a></li>
+                <li>Click "Continue with Google"</li>
+                <li>Complete Google authentication</li>
+                <li>Should redirect to dashboard immediately</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function testImmediateRedirect() {
+            console.log('Testing immediate redirect...');
+            
+            const testUser = {
+                id: 20,
+                name: 'Ashenafi Ashu',
+                email: 'ashenafi14264@gmail.com',
+                avatar: 'https://lh3.googleusercontent.com/a/ACg8ocLLBpDDD4uncpFowm0NfaOkKca6iAdK2ME6kajLsayzpKRYkg=s96-c',
+                is_admin: false
+            };
+
+            const testToken = '85|Ng2qMmtdIMIrnGmrtUy5GfkjGYtKVsBa7apfYoo15f6161e7';
+            
+            const params = new URLSearchParams({
+                auth_success: 'true',
+                token: testToken,
+                user: btoa(JSON.stringify(testUser))
+            });
+
+            console.log('Redirecting to login with OAuth callback parameters...');
+            window.location.href = `/login?${params.toString()}`;
+        }
+
+        console.log('Login Fix Test page loaded');
+        console.log('The "loading is not defined" error should now be fixed');
+    </script>
+</body>
+</html>

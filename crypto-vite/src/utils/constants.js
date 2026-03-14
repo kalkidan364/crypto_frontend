@@ -22,10 +22,13 @@ export const NAV_ITEMS = {
     { id: 'dashboard', label: 'Dashboard', icon: 'grid', active: true },
     { id: 'markets', label: 'Markets', icon: 'chart' },
     { id: 'trade', label: 'Trade', icon: 'dollar', badge: 'NEW', badgeColor: 'green' },
+    { id: 'orders', label: 'Orders', icon: 'clock' },
     { id: 'history', label: 'History', icon: 'clock' },
   ],
   portfolio: [
     { id: 'assets', label: 'Assets', icon: 'box' },
+    { id: 'deposit', label: 'Deposit', icon: 'plus' },
+    { id: 'withdrawal', label: 'Withdraw', icon: 'minus' },
     { id: 'analytics', label: 'Analytics', icon: 'bar-chart' },
     { id: 'reports', label: 'Reports', icon: 'file', badge: '3' },
   ],

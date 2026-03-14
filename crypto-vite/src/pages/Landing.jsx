@@ -356,7 +356,7 @@ const Landing = () => {
         </p>
 
         <div className="hero-btns">
-          <button className="btn-hero-primary" onClick={() => navigate('/dashboard')}>START TRADING FREE</button>
+          <button className="btn-hero-primary" onClick={() => navigate('/register')}>START TRADING FREE</button>
           <button className="btn-hero-secondary">
             <span className="play-icon">
               <svg viewBox="0 0 10 12" fill="currentColor">
@@ -680,7 +680,7 @@ const Landing = () => {
                 <span style={{ color: 'var(--muted)' }}>API access</span>
               </div>
             </div>
-            <button className="plan-btn pb-out" onClick={() => navigate('/login')}>GET STARTED</button>
+            <button className="plan-btn pb-out" onClick={() => navigate('/register')}>GET STARTED</button>
           </div>
 
           <div className="plan-card featured reveal" style={{ transitionDelay: '.2s' }}>
@@ -839,7 +839,7 @@ const Landing = () => {
         </div>
         <p className="cta-sub reveal">Join 14 million traders who trust NEXUS to execute their vision. Start for free today.</p>
         <div className="cta-btns reveal">
-          <button className="btn-cta-big" onClick={() => navigate('/dashboard')}>LAUNCH NEXUS FREE</button>
+          <button className="btn-cta-big" onClick={() => navigate('/register')}>LAUNCH NEXUS FREE</button>
           <button className="btn-cta-ghost">VIEW LIVE DEMO</button>
         </div>
       </section>

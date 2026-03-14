@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Authentication Fix Test</h1>
+        <p>This page tests the authentication fix for CSRF token mismatch issues.</p>
+
+        <div class="test-section info">
+            <h3>Test Configuration</h3>
+            <p><strong>Backend:</strong> http://127.0.0.1:8000</p>
+            <p><strong>Frontend:</strong> http://localhost:5175</p>
+            <p><strong>Test Users:</strong></p>
+            <ul>
+                <li>ashenafi14262@gmail.com / password123</li>
+                <li>ashenafisileshi7@gmail.com / password123</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Authentication Tests</h3>
+            <button onclick="testLogin('ashenafi14262@gmail.com', 'password123')">Test Login User 1</button>
+            <button onclick="testLogin('ashenafisileshi7@gmail.com', 'password123')">Test Login User 2</button>
+            <button onclick="testGetUser()">Test Get User</button>
+            <button onclick="testLogout()">Test Logout</button>
+            <button onclick="clearLogs()">Clear Logs</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Test Results</h3>
+            <div id="logs" class="log">Ready to test...\n</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000/api';
+        let authToken = localStorage.getItem('auth_token');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('logs');
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+            logElement.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').textContent = 'Logs cleared...\n';
+        }
+
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'omit', // Don't send cookies
+                ...options,
+            };
+
+            if (authToken) {
+                config.headers['Authorization'] = `Bearer ${authToken}`;
+            }
+
+            log(`Making ${options.method || 'GET'} request to ${endpoint}`);
+            
+            try {
+                const response = await fetch(url, config);
+                const data = await response.json();
+                
+                log(`Response: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    log(`Error: ${data.message || 'Unknown error'}`, 'error');
+                    return { success: false, error: data.message || 'Request failed' };
+                }
+                
+                log(`Success: ${JSON.stringify(data, null, 2)}`, 'success');
+                return data;
+            } catch (error) {
+                log(`Network error: ${error.message}`, 'error');
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testLogin(email, password) {
+            log(`\n=== Testing Login: ${email} ===`);
+            
+            const result = await apiRequest('/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ email, password })
+            });
+
+            if (result.success && result.token) {
+                authToken = result.token;
+                localStorage.setItem('auth_token', authToken);
+                log(`Login successful! Token stored.`, 'success');
+            } else {
+                log(`Login failed: ${result.error || result.message}`, 'error');
+            }
+        }
+
+        async function testGetUser() {
+            log(`\n=== Testing Get User ===`);
+            
+            if (!authToken) {
+                log('No auth token available. Please login first.', 'error');
+                return;
+            }
+
+            const result = await apiRequest('/auth/user');
+            
+            if (result.success) {
+                log(`User data retrieved successfully!`, 'success');
+            } else {
+                log(`Failed to get user: ${result.error || result.message}`, 'error');
+            }
+        }
+
+        async function testLogout() {
+            log(`\n=== Testing Logout ===`);
+            
+            if (!authToken) {
+                log('No auth token available. Already logged out.', 'error');
+                return;
+            }
+
+            const result = await apiRequest('/auth/logout', {
+                method: 'POST'
+            });
+
+            if (result.success) {
+                authToken = null;
+                localStorage.removeItem('auth_token');
+                log(`Logout successful!`, 'success');
+            } else {
+                log(`Logout failed: ${result.error || result.message}`, 'error');
+            }
+        }
+
+        // Initialize
+        if (authToken) {
+            log(`Found existing auth token: ${authToken.substring(0, 20)}...`);
+        } else {
+            log('No existing auth token found.');
+        }
+    </script>
+</body>
+</html>

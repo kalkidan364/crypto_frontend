@@ -1,43 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useMarketData } from '../hooks/useMarketData';
 import '../styles/components/markets.css';
-
-const COINS = [
-  {rank:1,name:'Bitcoin',sym:'BTC',icon:'₿',bg:'radial-gradient(circle,#ff9500,#f7931a)',color:'#f7931a',price:67842.50,c24:1.86,c7:4.21,vol:'$28.4B',mcap:'$1.34T',ath:73750,tags:['layer1']},
-  {rank:2,name:'Ethereum',sym:'ETH',icon:'Ξ',bg:'radial-gradient(circle,#8ea3f5,#627eea)',color:'#627eea',price:3541.20,c24:2.34,c7:8.12,vol:'$14.2B',mcap:'$425B',ath:4891,tags:['layer1','defi']},
-  {rank:3,name:'Tether',sym:'USDT',icon:'₮',bg:'radial-gradient(circle,#26a17b,#1a7a5e)',color:'#26a17b',price:1.0002,c24:0.01,c7:0.02,vol:'$48.1B',mcap:'$110B',ath:1.05,tags:['stable']},
-  {rank:4,name:'BNB',sym:'BNB',icon:'B',bg:'radial-gradient(circle,#f5cc3a,#f3ba2f)',color:'#f3ba2f',price:412.30,c24:0.45,c7:-1.2,vol:'$2.8B',mcap:'$62B',ath:690,tags:['layer1']},
-  {rank:5,name:'Solana',sym:'SOL',icon:'◎',bg:'radial-gradient(circle,#c074fc,#9945ff)',color:'#9945ff',price:172.85,c24:-0.82,c7:6.44,vol:'$5.1B',mcap:'$76B',ath:259,tags:['layer1']},
-  {rank:6,name:'XRP',sym:'XRP',icon:'✕',bg:'radial-gradient(circle,#00c8f0,#00aae4)',color:'#00aae4',price:0.5821,c24:-1.21,c7:-3.1,vol:'$1.9B',mcap:'$32B',ath:3.40,tags:['layer1']},
-  {rank:7,name:'USD Coin',sym:'USDC',icon:'$',bg:'radial-gradient(circle,#3e73c4,#2775ca)',color:'#2775ca',price:1.0000,c24:0.00,c7:0.01,vol:'$7.8B',mcap:'$43B',ath:1.17,tags:['stable']},
-  {rank:8,name:'Cardano',sym:'ADA',icon:'₳',bg:'radial-gradient(circle,#0eccb1,#0db899)',color:'#0db899',price:0.4521,c24:-0.33,c7:1.88,vol:'$0.6B',mcap:'$16B',ath:3.09,tags:['layer1']},
-  {rank:9,name:'Avalanche',sym:'AVAX',icon:'A',bg:'radial-gradient(circle,#ff6060,#e84142)',color:'#e84142',price:38.42,c24:3.12,c7:11.4,vol:'$0.9B',mcap:'$16B',ath:144,tags:['layer1']},
-  {rank:10,name:'Dogecoin',sym:'DOGE',icon:'Ð',bg:'radial-gradient(circle,#e8c84a,#c9a227)',color:'#c9a227',price:0.1641,c24:5.44,c7:14.2,vol:'$1.2B',mcap:'$24B',ath:0.731,tags:['layer1']},
-  {rank:11,name:'Shiba Inu',sym:'SHIB',icon:'🐕',bg:'radial-gradient(circle,#e44c3a,#b33425)',color:'#e44c3a',price:0.0000248,c24:7.21,c7:22.8,vol:'$0.8B',mcap:'$14B',ath:0.0000888,tags:['nft']},
-  {rank:12,name:'Polkadot',sym:'DOT',icon:'●',bg:'radial-gradient(circle,#e6007a,#b3005f)',color:'#e6007a',price:7.82,c24:-2.1,c7:-4.5,vol:'$0.4B',mcap:'$10B',ath:54.98,tags:['layer1']},
-  {rank:13,name:'Uniswap',sym:'UNI',icon:'🦄',bg:'radial-gradient(circle,#ff007a,#cc0062)',color:'#ff007a',price:9.14,c24:1.55,c7:3.2,vol:'$0.3B',mcap:'$5.5B',ath:44.97,tags:['defi']},
-  {rank:14,name:'Chainlink',sym:'LINK',icon:'⬡',bg:'radial-gradient(circle,#375bd2,#2a4bbf)',color:'#375bd2',price:14.72,c24:0.88,c7:5.1,vol:'$0.5B',mcap:'$9B',ath:52.88,tags:['defi']},
-  {rank:15,name:'Polygon',sym:'MATIC',icon:'⬢',bg:'radial-gradient(circle,#8247e5,#6a35d0)',color:'#8247e5',price:0.9841,c24:-1.44,c7:-7.2,vol:'$0.7B',mcap:'$10B',ath:2.92,tags:['layer1','defi']},
-  {rank:16,name:'NEAR',sym:'NEAR',icon:'N',bg:'radial-gradient(circle,#00c08b,#00966e)',color:'#00c08b',price:6.48,c24:2.77,c7:9.3,vol:'$0.3B',mcap:'$7B',ath:20.44,tags:['layer1']},
-  {rank:17,name:'Cosmos',sym:'ATOM',icon:'⚛',bg:'radial-gradient(circle,#8b90b2,#6f7390)',color:'#8b90b2',price:10.24,c24:4.21,c7:12.8,vol:'$0.2B',mcap:'$4B',ath:44.45,tags:['layer1']},
-  {rank:18,name:'Aave',sym:'AAVE',icon:'Ø',bg:'radial-gradient(circle,#b6509e,#9b4289)',color:'#b6509e',price:112.40,c24:3.88,c7:8.7,vol:'$0.2B',mcap:'$1.7B',ath:661,tags:['defi']},
-  {rank:19,name:'Internet Computer',sym:'ICP',icon:'∞',bg:'radial-gradient(circle,#f15a24,#d94e1f)',color:'#f15a24',price:11.82,c24:-3.41,c7:-9.1,vol:'$0.2B',mcap:'$5.5B',ath:700.65,tags:['layer1']},
-  {rank:20,name:'ApeCoin',sym:'APE',icon:'🐒',bg:'radial-gradient(circle,#0054fa,#003fcc)',color:'#0054fa',price:1.24,c24:8.92,c7:18.6,vol:'$0.15B',mcap:'$0.9B',ath:39.40,tags:['nft']},
-];
-
-const TRENDING = [
-  {sym:'APE',icon:'🐒',name:'ApeCoin',bg:'radial-gradient(circle,#0054fa,#003fcc)',c24:8.92},
-  {sym:'SHIB',icon:'🐕',name:'Shiba Inu',bg:'radial-gradient(circle,#e44c3a,#b33425)',c24:7.21},
-  {sym:'DOGE',icon:'Ð',name:'Dogecoin',bg:'radial-gradient(circle,#e8c84a,#c9a227)',c24:5.44},
-  {sym:'ATOM',icon:'⚛',name:'Cosmos',bg:'radial-gradient(circle,#8b90b2,#6f7390)',c24:4.21},
-  {sym:'AVAX',icon:'A',name:'Avalanche',bg:'radial-gradient(circle,#ff6060,#e84142)',c24:3.12},
-];
-
-const HM = [
-  {sym:'BTC',c:1.86},{sym:'ETH',c:2.34},{sym:'SOL',c:-0.82},{sym:'BNB',c:0.45},
-  {sym:'XRP',c:-1.21},{sym:'AVAX',c:3.12},{sym:'DOGE',c:5.44},{sym:'ADA',c:-0.33},
-  {sym:'SHIB',c:7.21},{sym:'DOT',c:-2.10},{sym:'MATIC',c:-1.44},{sym:'LINK',c:0.88},
-  {sym:'APE',c:8.92},{sym:'ATOM',c:4.21},{sym:'ICP',c:-3.41},{sym:'AAVE',c:3.88},
-];
 
 const Sparkline = ({ data, color }) => {
   const w = 68, h = 26;
@@ -46,7 +9,7 @@ const Sparkline = ({ data, color }) => {
   const ty = v => h - ((v - mn) / (mx - mn + 0.0001)) * h * 0.78 - h * 0.08;
   const pts = data.map((v, i) => `${tx(i)},${ty(v)}`).join(' ');
   const fill = `0,${h} ${data.map((v, i) => `${tx(i)},${ty(v)}`).join(' ')} ${w},${h}`;
-  const id = `sg${color.replace(/[^a-z0-9]/gi, '')}${Math.random().toString(36).substr(2, 9)}`;
+  const id = `sg${color.replace(/[^a-z0-9]/gi, '')}${Math.random().toString(36).substring(2, 11)}`;
   
   return (
     <svg viewBox={`0 0 ${w} ${h}`} width="68" height="26" style={{ display: 'block' }}>
@@ -64,7 +27,8 @@ const Sparkline = ({ data, color }) => {
 
 
 const Markets = () => {
-  const [filtered, setFiltered] = useState([...COINS]);
+  const { marketData, loading, error, refreshMarketData } = useMarketData();
+  const [filtered, setFiltered] = useState([]);
   const [tagFilter, setTagFilter] = useState('all');
   const [selectedSym, setSelectedSym] = useState(null);
   const [watchlist, setWatchlist] = useState(new Set());
@@ -72,12 +36,38 @@ const Markets = () => {
   const [glMode, setGlMode] = useState('g');
   const canvasRef = useRef(null);
 
-  const fp = (p) => {
-    if (p < 0.00001) return '$' + p.toFixed(8);
-    if (p < 0.001) return '$' + p.toFixed(6);
-    if (p < 1) return '$' + p.toFixed(4);
-    if (p < 10) return '$' + p.toFixed(3);
-    return '$' + p.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // Calculate derived data from real market data
+  const trending = marketData
+    .filter(coin => coin.c24 > 0)
+    .sort((a, b) => b.c24 - a.c24)
+    .slice(0, 5);
+
+  const heatmapData = marketData.slice(0, 16).map(coin => ({
+    sym: coin.sym,
+    c: coin.c24
+  }));
+
+  const globalStats = {
+    totalMarketCap: marketData.reduce((sum, coin) => {
+      const mcap = parseFloat(coin.mcap.replace(/[$,KMBT]/g, '')) * 
+        (coin.mcap.includes('T') ? 1e12 : coin.mcap.includes('B') ? 1e9 : coin.mcap.includes('M') ? 1e6 : coin.mcap.includes('K') ? 1e3 : 1);
+      return sum + mcap;
+    }, 0),
+    totalVolume: marketData.reduce((sum, coin) => {
+      const vol = parseFloat(coin.vol.replace(/[$,KMBT]/g, '')) * 
+        (coin.vol.includes('T') ? 1e12 : coin.vol.includes('B') ? 1e9 : coin.vol.includes('M') ? 1e6 : coin.vol.includes('K') ? 1e3 : 1);
+      return sum + vol;
+    }, 0),
+    btcDominance: marketData.length > 0 ? 
+      (parseFloat(marketData.find(c => c.sym === 'BTC')?.mcap.replace(/[$,KMBT]/g, '') || '0') / 
+       marketData.reduce((sum, coin) => sum + parseFloat(coin.mcap.replace(/[$,KMBT]/g, '') || '0'), 0) * 100) : 0
+  };
+
+  const formatGlobalStat = (value) => {
+    if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+    if (value >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
+    if (value >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
+    return `$${value.toFixed(0)}`;
   };
 
   const genSpark = (base, trend) => {
@@ -163,27 +153,83 @@ const Markets = () => {
   };
 
   useEffect(() => {
-    let list = [...COINS];
+    let list = [...marketData];
     if (tagFilter !== 'all') list = list.filter(c => c.tags && c.tags.includes(tagFilter));
     if (searchTerm) list = list.filter(c =>
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.sym.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFiltered(list);
-  }, [tagFilter, searchTerm]);
+  }, [tagFilter, searchTerm, marketData]);
 
   useEffect(() => {
     if (selectedSym) {
-      const coin = COINS.find(c => c.sym === selectedSym);
+      const coin = marketData.find(c => c.sym === selectedSym);
       if (coin) {
         setTimeout(() => drawDetailChart(coin), 50);
       }
     }
-  }, [selectedSym]);
+  }, [selectedSym, marketData]);
 
-  const selectedCoin = selectedSym ? COINS.find(c => c.sym === selectedSym) : null;
-  const sortedForGL = [...COINS].sort((a, b) => glMode === 'g' ? b.c24 - a.c24 : a.c24 - b.c24);
+  const selectedCoin = selectedSym ? marketData.find(c => c.sym === selectedSym) : null;
+  const sortedForGL = [...marketData].sort((a, b) => glMode === 'g' ? b.c24 - a.c24 : a.c24 - b.c24);
 
+  // Show loading state
+  if (loading) {
+    return (
+      <main className="main">
+        <div className="loading-container" style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '50vh',
+          color: 'var(--text-secondary)'
+        }}>
+          <div>Loading market data...</div>
+        </div>
+      </main>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <main className="main">
+        <div className="error-container" style={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '50vh',
+          color: 'var(--red)'
+        }}>
+          <div>Error loading market data: {error}</div>
+          <button 
+            onClick={refreshMarketData}
+            style={{
+              marginTop: '1rem',
+              padding: '0.5rem 1rem',
+              background: 'var(--primary)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  const fp = (p) => {
+    if (p < 0.00001) return '$' + p.toFixed(8);
+    if (p < 0.001) return '$' + p.toFixed(6);
+    if (p < 1) return '$' + p.toFixed(4);
+    if (p < 10) return '$' + p.toFixed(3);
+    return '$' + p.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
 
   return (
     <main className="main">
@@ -191,19 +237,19 @@ const Markets = () => {
         <div className="hero-row">
           <div className="hero-stat">
             <div className="hs-label">Global Mkt Cap</div>
-            <div className="hs-val" style={{ color: 'var(--cyan)' }}>$2.41T</div>
+            <div className="hs-val" style={{ color: 'var(--cyan)' }}>{formatGlobalStat(globalStats.totalMarketCap)}</div>
             <div className="hs-chg" style={{ color: 'var(--green)' }}>▲ +2.8%</div>
           </div>
           <div className="hs-div"></div>
           <div className="hero-stat">
             <div className="hs-label">24h Volume</div>
-            <div className="hs-val">$98.4B</div>
+            <div className="hs-val">{formatGlobalStat(globalStats.totalVolume)}</div>
             <div className="hs-chg" style={{ color: 'var(--green)' }}>▲ +12.4%</div>
           </div>
           <div className="hs-div"></div>
           <div className="hero-stat">
             <div className="hs-label">BTC Dom</div>
-            <div className="hs-val" style={{ color: 'var(--gold)' }}>54.7%</div>
+            <div className="hs-val" style={{ color: 'var(--gold)' }}>{globalStats.btcDominance.toFixed(1)}%</div>
             <div className="hs-chg" style={{ color: 'var(--red)' }}>▼ −0.3%</div>
           </div>
           <div className="hs-div"></div>
@@ -374,7 +420,7 @@ const Markets = () => {
               <div className="sp-right">LAST 24H</div>
             </div>
             <div>
-              {TRENDING.map((c, i) => (
+              {trending.map((c, i) => (
                 <div key={c.sym} className="tr-item" onClick={() => setSelectedSym(c.sym)}>
                   <div className="tr-rank">#{i + 1}</div>
                   <div className="tr-orb" style={{ background: c.bg }}>{c.icon}</div>
@@ -403,7 +449,7 @@ const Markets = () => {
               <div className="sp-right">24H PERF</div>
             </div>
             <div className="hm-grid">
-              {HM.map(h => {
+              {heatmapData.map(h => {
                 const v = h.c;
                 const int = Math.min(Math.abs(v) / 9, 1);
                 const bg = v >= 0

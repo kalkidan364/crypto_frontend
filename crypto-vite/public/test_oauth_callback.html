@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Callback Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-url {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+            margin: 20px 0;
+            word-break: break-all;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .debug-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 OAuth Callback Test</h1>
+        <p>This page helps test the OAuth callback functionality directly.</p>
+
+        <h2>Test OAuth Callback URL</h2>
+        <p>Click the button below to test a simulated OAuth callback:</p>
+        
+        <div class="test-url" id="testUrl">
+            Loading test URL...
+        </div>
+        
+        <a href="#" id="testButton" class="button">Test OAuth Callback</a>
+        <button onclick="copyUrl()" class="button">Copy URL</button>
+        <button onclick="parseCurrentUrl()" class="button">Parse Current URL</button>
+
+        <h2>Debug Information</h2>
+        <div class="debug-info" id="debugInfo">
+            <strong>Current URL:</strong> <span id="currentUrl"></span><br>
+            <strong>URL Parameters:</strong> <span id="urlParams"></span><br>
+            <strong>Local Storage Token:</strong> <span id="localToken"></span><br>
+            <strong>Frontend URL:</strong> <span id="frontendUrl"></span>
+        </div>
+
+        <h2>OAuth Flow Steps</h2>
+        <ol>
+            <li>User clicks "Continue with Google" on login page</li>
+            <li>Redirected to Google OAuth</li>
+            <li>After Google auth, redirected to backend callback</li>
+            <li>Backend processes OAuth and redirects to frontend with parameters</li>
+            <li>Frontend processes parameters and redirects to dashboard</li>
+        </ol>
+
+        <h2>Manual Test Instructions</h2>
+        <ol>
+            <li>Click "Test OAuth Callback" button above</li>
+            <li>Check browser console for logs</li>
+            <li>Should redirect to dashboard after processing</li>
+            <li>If it doesn't work, check the debug information</li>
+        </ol>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Generate test OAuth callback URL
+        const testUserData = {
+            id: 999,
+            name: 'Test OAuth User',
+            email: 'test.oauth@gmail.com',
+            avatar: 'https://example.com/avatar.jpg',
+            is_admin: false
+        };
+
+        const testToken = 'test-jwt-token-' + Date.now();
+        const encodedUserData = btoa(JSON.stringify(testUserData));
+        
+        const testCallbackUrl = window.location.origin + '/login?' + new URLSearchParams({
+            auth_success: 'true',
+            token: testToken,
+            user: encodedUserData
+        }).toString();
+
+        // Update the test URL display
+        document.getElementById('testUrl').textContent = testCallbackUrl;
+        document.getElementById('testButton').href = testCallbackUrl;
+
+        // Update debug information
+        function updateDebugInfo() {
+            document.getElementById('currentUrl').textContent = window.location.href;
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const params = {};
+            for (const [key, value] of urlParams) {
+                params[key] = value;
+            }
+            document.getElementById('urlParams').textContent = JSON.stringify(params, null, 2);
+            
+            document.getElementById('localToken').textContent = localStorage.getItem('auth_token') || 'None';
+            document.getElementById('frontendUrl').textContent = window.location.origin;
+        }
+
+        // Copy URL to clipboard
+        function copyUrl() {
+            navigator.clipboard.writeText(testCallbackUrl).then(() => {
+                alert('URL copied to clipboard!');
+            });
+        }
+
+        // Parse current URL parameters
+        function parseCurrentUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const authSuccess = urlParams.get('auth_success');
+            const token = urlParams.get('token');
+            const userParam = urlParams.get('user');
+
+            let results = '<h3>Current URL Analysis:</h3>';
+            
+            if (authSuccess === 'true' && token && userParam) {
+                try {
+                    const userData = JSON.parse(atob(userParam));
+                    results += '<p class="success">✅ Valid OAuth callback parameters found!</p>';
+                    results += '<p><strong>Token:</strong> ' + token.substring(0, 20) + '...</p>';
+                    results += '<p><strong>User Data:</strong></p>';
+                    results += '<pre>' + JSON.stringify(userData, null, 2) + '</pre>';
+                    
+                    // Simulate what the frontend should do
+                    results += '<p class="info">Frontend should:</p>';
+                    results += '<ul>';
+                    results += '<li>Store token in localStorage</li>';
+                    results += '<li>Set user in AuthContext</li>';
+                    results += '<li>Redirect to ' + (userData.is_admin ? '/admin' : '/dashboard') + '</li>';
+                    results += '</ul>';
+                    
+                } catch (error) {
+                    results += '<p class="error">❌ Error parsing user data: ' + error.message + '</p>';
+                }
+            } else {
+                results += '<p class="info">No OAuth callback parameters in current URL</p>';
+                results += '<p>Expected parameters: auth_success, token, user</p>';
+            }
+
+            document.getElementById('results').innerHTML = results;
+        }
+
+        // Initialize
+        updateDebugInfo();
+        
+        // Auto-parse if we have OAuth parameters
+        if (window.location.search.includes('auth_success')) {
+            parseCurrentUrl();
+        }
+
+        // Update debug info every 2 seconds
+        setInterval(updateDebugInfo, 2000);
+
+        console.log('OAuth Callback Test Page Loaded');
+        console.log('Test URL:', testCallbackUrl);
+    </script>
+</body>
+</html>

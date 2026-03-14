@@ -1,60 +1,48 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useOrderBook } from '../hooks/useOrderBook';
+import { useTradingData } from '../hooks/useTradingData';
+import { useMarketData } from '../hooks/useMarketData';
 import '../styles/components/trade.css';
 
-const PAIRS = [
-  { sym: 'BTC', quote: 'USDT', icon: '₿', bg: 'radial-gradient(circle,#ff9500,#f7931a)', price: 67842.50, chg: 1.86, vol: '$28.4B' },
-  { sym: 'ETH', quote: 'USDT', icon: 'Ξ', bg: 'radial-gradient(circle,#8ea3f5,#627eea)', price: 3541.20, chg: 2.34, vol: '$14.2B' },
-  { sym: 'SOL', quote: 'USDT', icon: '◎', bg: 'radial-gradient(circle,#c074fc,#9945ff)', price: 172.85, chg: -0.82, vol: '$5.1B' },
-  { sym: 'BNB', quote: 'USDT', icon: 'B', bg: 'radial-gradient(circle,#f5cc3a,#f3ba2f)', price: 412.30, chg: 0.45, vol: '$2.8B' },
-  { sym: 'XRP', quote: 'USDT', icon: '✕', bg: 'radial-gradient(circle,#00c8f0,#00aae4)', price: 0.5821, chg: -1.21, vol: '$1.9B' },
-  { sym: 'AVAX', quote: 'USDT', icon: 'A', bg: 'radial-gradient(circle,#ff6060,#e84142)', price: 38.42, chg: 3.12, vol: '$0.9B' },
-  { sym: 'DOGE', quote: 'USDT', icon: 'Ð', bg: 'radial-gradient(circle,#e8c84a,#c9a227)', price: 0.1641, chg: 5.44, vol: '$1.2B' },
-  { sym: 'MATIC', quote: 'USDT', icon: '⬟', bg: 'radial-gradient(circle,#9b59f5,#7b2fe8)', price: 0.88, chg: 1.55, vol: '$0.6B' },
-  { sym: 'LINK', quote: 'USDT', icon: '⬡', bg: 'radial-gradient(circle,#3b82f6,#1d4ed8)', price: 14.82, chg: 2.88, vol: '$0.5B' },
-  { sym: 'DOT', quote: 'USDT', icon: '●', bg: 'radial-gradient(circle,#e6007a,#9b0054)', price: 7.14, chg: -2.10, vol: '$0.4B' },
-  { sym: 'UNI', quote: 'USDT', icon: '🦄', bg: 'radial-gradient(circle,#ff60b0,#e91e8c)', price: 8.24, chg: 4.21, vol: '$0.4B' },
-  { sym: 'NEAR', quote: 'USDT', icon: 'N', bg: 'radial-gradient(circle,#00c08b,#008a62)', price: 5.82, chg: 6.77, vol: '$0.7B' },
-];
-
 const Trade = () => {
+  const { marketData, loading: marketLoading } = useMarketData();
+  const [selectedPair, setSelectedPair] = useState('BTC');
+  const { orderBook, loading: orderBookLoading } = useOrderBook(selectedPair);
+  const { orders, placeOrder, cancelOrder, loading: tradingLoading } = useTradingData();
+  
   const mainChartRef = useRef(null);
   const depthChartRef = useRef(null);
-  const activePair = PAIRS[0];
   const [tradeMode, setTradeMode] = useState('buy');
   const [orderType, setOrderType] = useState('Limit');
   const [activeTF, setActiveTF] = useState('4H');
-  const [price, setPrice] = useState(activePair.price.toFixed(2));
+  const [price, setPrice] = useState('');
   const [amount, setAmount] = useState('0.00000');
   const [total, setTotal] = useState('0.00');
   const [pct, setPct] = useState(100);
   const [candles, setCandles] = useState([]);
-  const [asks, setAsks] = useState([]);
-  const [bids, setBids] = useState([]);
+  const [orderMessage, setOrderMessage] = useState('');
+
+  // Get current pair data from market data
+  const activePair = marketData.find(coin => coin.sym === selectedPair) || {
+    sym: selectedPair,
+    name: selectedPair,
+    icon: selectedPair.charAt(0),
+    bg: 'radial-gradient(circle,#6b7280,#4b5563)',
+    price: 0,
+    c24: 0,
+    vol: '$0'
+  };
+
+  // Set initial price when pair changes
+  useEffect(() => {
+    if (activePair.price && !price) {
+      setPrice(activePair.price.toFixed(2));
+    }
+  }, [activePair.price, price]);
 
   const fmtPrice = (p) => {
     return p < 1 ? `$${p.toFixed(4)}` : p < 100 ? `$${p.toFixed(2)}` : `$${p.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
-
-  useEffect(() => {
-    generateCandleData();
-    buildOrderBook();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePair]);
-
-  useEffect(() => {
-    if (mainChartRef.current) drawMainChart();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [candles, activeTF]);
-
-  useEffect(() => {
-    if (depthChartRef.current) drawDepthChart();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [asks, bids]);
-
-  useEffect(() => {
-    calcSummary();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [price, amount]);
 
   const generateCandleData = (n = 120) => {
     const newCandles = [];
@@ -71,8 +59,34 @@ const Trade = () => {
       v = close;
     }
     newCandles[newCandles.length - 1].c = activePair.price;
-    setCandles(newCandles);
+    return newCandles;
   };
+
+  useEffect(() => {
+    if (activePair.price > 0) {
+      const candleData = generateCandleData();
+      setCandles(candleData);
+    }
+  }, [activePair.price]); // Only depend on price, not the entire activePair object
+
+  useEffect(() => {
+    if (mainChartRef.current && candles.length > 0) {
+      drawMainChart();
+    }
+  }, [candles, activeTF]);
+
+  useEffect(() => {
+    if (depthChartRef.current && orderBook.asks && orderBook.bids) {
+      drawDepthChart();
+    }
+  }, [orderBook.asks, orderBook.bids, activePair.price]);
+
+  useEffect(() => {
+    const p = parseFloat(price) || activePair.price;
+    const amt = parseFloat(amount) || 0;
+    const t = p * amt;
+    setTotal(t.toFixed(2));
+  }, [price, amount, activePair.price]);
 
   const drawMainChart = () => {
     const canvas = mainChartRef.current;
@@ -134,21 +148,9 @@ const Trade = () => {
     });
   };
 
-  const buildOrderBook = () => {
-    const base = activePair.price;
-    const newAsks = [];
-    const newBids = [];
-    for (let i = 1; i <= 14; i++) {
-      newAsks.push({ p: base + i * (1 + Math.random() * 3), a: +(Math.random() * 2 + 0.01).toFixed(4) });
-      newBids.push({ p: base - i * (1 + Math.random() * 3), a: +(Math.random() * 2 + 0.01).toFixed(4) });
-    }
-    setAsks(newAsks);
-    setBids(newBids);
-  };
-
   const drawDepthChart = () => {
     const canvas = depthChartRef.current;
-    if (!canvas) return;
+    if (!canvas || !orderBook.asks || !orderBook.bids) return;
     const ctx = canvas.getContext('2d');
     const W = canvas.parentElement.clientWidth;
     const H = canvas.parentElement.clientHeight;
@@ -159,11 +161,26 @@ const Trade = () => {
     const depthBids = [];
     const depthAsks = [];
     let bcum = 0, acum = 0;
-    for (let i = 0; i < 40; i++) {
-      bcum += Math.random() * 2 + 0.1;
-      depthBids.push({ p: base - (i + 1) * base * 0.001, v: bcum });
-      acum += Math.random() * 2 + 0.1;
-      depthAsks.push({ p: base + (i + 1) * base * 0.001, v: acum });
+    
+    // Use real order book data if available, otherwise generate mock data
+    if (orderBook.bids.length > 0 && orderBook.asks.length > 0) {
+      orderBook.bids.forEach(bid => {
+        bcum += bid.amount;
+        depthBids.push({ p: bid.price, v: bcum });
+      });
+      
+      orderBook.asks.forEach(ask => {
+        acum += ask.amount;
+        depthAsks.push({ p: ask.price, v: acum });
+      });
+    } else {
+      // Fallback to mock data
+      for (let i = 0; i < 40; i++) {
+        bcum += Math.random() * 2 + 0.1;
+        depthBids.push({ p: base - (i + 1) * base * 0.001, v: bcum });
+        acum += Math.random() * 2 + 0.1;
+        depthAsks.push({ p: base + (i + 1) * base * 0.001, v: acum });
+      }
     }
 
     const allPrices = [...depthBids.map(b => b.p), ...depthAsks.map(a => a.p)];
@@ -202,18 +219,57 @@ const Trade = () => {
 
 
 
-  const calcSummary = () => {
-    const p = parseFloat(price) || activePair.price;
-    const amt = parseFloat(amount) || 0;
-    const t = p * amt;
-    setTotal(t.toFixed(2));
-  };
 
   const handlePctClick = (percentage) => {
     setPct(percentage);
-    const maxAmt = 1.2341;
+    const maxAmt = 1.2341; // This should come from wallet balance
     setAmount((maxAmt * percentage / 100).toFixed(5));
   };
+
+  const handlePlaceOrder = async () => {
+    try {
+      setOrderMessage('');
+      
+      const orderData = {
+        cryptocurrency_symbol: selectedPair,
+        order_type: orderType.toLowerCase(),
+        side: tradeMode,
+        quantity: amount,
+        price: orderType === 'Limit' ? price : undefined
+      };
+
+      const result = await placeOrder(orderData);
+      
+      if (result.success) {
+        setOrderMessage(`Order placed successfully! Order ID: ${result.order?.id}`);
+        // Reset form
+        setAmount('0.00000');
+        setTotal('0.00');
+        setPct(100);
+      } else {
+        setOrderMessage(`Error: ${result.message}`);
+      }
+    } catch (error) {
+      setOrderMessage(`Error: ${error.message}`);
+    }
+  };
+
+  // Show loading state
+  if (marketLoading) {
+    return (
+      <main className="main-content">
+        <div className="loading-container" style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '50vh',
+          color: 'var(--text-secondary)'
+        }}>
+          <div>Loading trading data...</div>
+        </div>
+      </main>
+    );
+  }
 
 
 
@@ -244,6 +300,26 @@ const Trade = () => {
         <div className="trade-panel">
           <div className="tp-section">
             <div className="tp-header">
+              <div className="tp-pair-selector" style={{ marginBottom: '0.5rem' }}>
+                <select 
+                  value={selectedPair} 
+                  onChange={(e) => setSelectedPair(e.target.value)}
+                  style={{
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '4px',
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  {marketData.map(coin => (
+                    <option key={coin.sym} value={coin.sym}>
+                      {coin.sym}/USDT
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="tp-pair-info">
                 <div className="tp-orb" style={{ background: activePair.bg }}>{activePair.icon}</div>
                 <div className="tp-pname">{activePair.sym} / USDT</div>
@@ -349,9 +425,136 @@ const Trade = () => {
               </div>
             </div>
 
-            <button className={`exec-btn exec-${tradeMode}`}>
-              {tradeMode === 'buy' ? 'BUY' : 'SELL'} {activePair.sym}
+            <button className={`exec-btn exec-${tradeMode}`} onClick={handlePlaceOrder} disabled={tradingLoading}>
+              {tradingLoading ? 'PLACING...' : `${tradeMode === 'buy' ? 'BUY' : 'SELL'} ${activePair.sym}`}
             </button>
+            
+            {orderMessage && (
+              <div className={`order-message ${orderMessage.includes('Error') ? 'error' : 'success'}`} style={{
+                marginTop: '0.5rem',
+                padding: '0.5rem',
+                borderRadius: '4px',
+                fontSize: '0.875rem',
+                backgroundColor: orderMessage.includes('Error') ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
+                color: orderMessage.includes('Error') ? '#ef4444' : '#10b981',
+                border: `1px solid ${orderMessage.includes('Error') ? '#ef4444' : '#10b981'}`
+              }}>
+                {orderMessage}
+              </div>
+            )}
+          </div>
+
+          {/* Order Book Section */}
+          <div className="order-book-section" style={{ marginTop: '1rem' }}>
+            <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Order Book</h3>
+            {orderBookLoading ? (
+              <div style={{ color: 'var(--text-secondary)' }}>Loading order book...</div>
+            ) : (
+              <div className="order-book-container" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                <div className="asks-section">
+                  <h4 style={{ color: '#ef4444', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Asks (Sell Orders)</h4>
+                  {orderBook.asks?.slice(0, 10).map((ask, i) => (
+                    <div key={i} className="order-row" style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      fontSize: '0.75rem',
+                      color: 'var(--text-secondary)',
+                      padding: '0.125rem 0'
+                    }}>
+                      <span style={{ color: '#ef4444' }}>{fmtPrice(ask.price)}</span>
+                      <span>{ask.amount}</span>
+                      <span>{ask.total}</span>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="spread-info" style={{ 
+                  textAlign: 'center', 
+                  margin: '0.5rem 0',
+                  padding: '0.25rem',
+                  backgroundColor: 'rgba(107,114,128,0.1)',
+                  borderRadius: '4px',
+                  fontSize: '0.75rem'
+                }}>
+                  Spread: {orderBook.spread ? `$${orderBook.spread}` : 'N/A'}
+                </div>
+                
+                <div className="bids-section">
+                  <h4 style={{ color: '#10b981', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Bids (Buy Orders)</h4>
+                  {orderBook.bids?.slice(0, 10).map((bid, i) => (
+                    <div key={i} className="order-row" style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      fontSize: '0.75rem',
+                      color: 'var(--text-secondary)',
+                      padding: '0.125rem 0'
+                    }}>
+                      <span style={{ color: '#10b981' }}>{fmtPrice(bid.price)}</span>
+                      <span>{bid.amount}</span>
+                      <span>{bid.total}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Recent Orders Section */}
+          <div className="recent-orders-section" style={{ marginTop: '1rem' }}>
+            <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Your Recent Orders</h3>
+            {orders.length === 0 ? (
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>No recent orders</div>
+            ) : (
+              <div className="orders-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                {orders.slice(0, 5).map((order) => (
+                  <div key={order.id} className="order-item" style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '0.5rem',
+                    marginBottom: '0.25rem',
+                    backgroundColor: 'rgba(107,114,128,0.05)',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem'
+                  }}>
+                    <div>
+                      <span style={{ color: order.side === 'buy' ? '#10b981' : '#ef4444' }}>
+                        {order.side.toUpperCase()}
+                      </span>
+                      <span style={{ marginLeft: '0.5rem' }}>{order.cryptocurrency_symbol}</span>
+                    </div>
+                    <div style={{ color: 'var(--text-secondary)' }}>
+                      {order.quantity} @ {fmtPrice(order.price)}
+                    </div>
+                    <div>
+                      <span className={`status-${order.status}`} style={{
+                        color: order.status === 'filled' ? '#10b981' : 
+                              order.status === 'cancelled' ? '#ef4444' : '#f59e0b'
+                      }}>
+                        {order.status}
+                      </span>
+                      {order.status === 'pending' && (
+                        <button 
+                          onClick={() => cancelOrder(order.id)}
+                          style={{
+                            marginLeft: '0.5rem',
+                            padding: '0.125rem 0.25rem',
+                            fontSize: '0.625rem',
+                            background: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '2px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

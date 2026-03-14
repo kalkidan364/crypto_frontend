@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deposits & Withdrawals Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #00e5cc, #00b4d8);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .section {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            background: #f9f9f9;
+        }
+
+        .section h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #00e5cc;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #00e5cc, #00b4d8);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 229, 204, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #495057);
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .auth-section {
+            grid-column: 1 / -1;
+            margin-bottom: 20px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.success {
+            background: #28a745;
+        }
+
+        .status-indicator.error {
+            background: #dc3545;
+        }
+
+        .status-indicator.pending {
+            background: #ffc107;
+        }
+
+        .qr-code {
+            max-width: 200px;
+            margin: 10px 0;
+        }
+
+        .address-display {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Deposits & Withdrawals Test</h1>
+            <p>Test the complete deposit and withdrawal system</p>
+        </div>
+
+        <div class="content">
+            <!-- Authentication Section -->
+            <div class="section auth-section">
+                <h3>🔐 Authentication</h3>
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="email" value="ashenafiashew074@gmail.com" placeholder="Enter email">
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="password" value="Password123!" placeholder="Enter password">
+                </div>
+                <button class="btn" onclick="login()">Login</button>
+                <div id="authResult" class="result" style="display: none;"></div>
+                <div id="authStatus">
+                    <p><span class="status-indicator pending"></span>Authentication: Not logged in</p>
+                </div>
+            </div>
+
+            <!-- Deposits Section -->
+            <div class="section">
+                <h3>📥 Deposits</h3>
+                
+                <!-- Generate Deposit Address -->
+                <h4>Generate Crypto Deposit Address</h4>
+                <div class="form-group">
+                    <label>Currency:</label>
+                    <select id="depositCurrency">
+                        <option value="BTC">Bitcoin (BTC)</option>
+                        <option value="ETH">Ethereum (ETH)</option>
+                        <option value="LTC">Litecoin (LTC)</option>
+                        <option value="BCH">Bitcoin Cash (BCH)</option>
+                        <option value="XRP">Ripple (XRP)</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="generateDepositAddress()" id="generateAddressBtn" disabled>Generate Address</button>
+                <div id="depositAddressResult" class="result" style="display: none;"></div>
+
+                <!-- Simulate Crypto Deposit -->
+                <h4>Simulate Crypto Deposit</h4>
+                <div class="form-group">
+                    <label>Amount:</label>
+                    <input type="number" id="cryptoDepositAmount" step="0.00000001" placeholder="0.001" value="0.001">
+                </div>
+                <div class="form-group">
+                    <label>Wallet Address:</label>
+                    <input type="text" id="cryptoWalletAddress" placeholder="Generated address will appear here" readonly>
+                </div>
+                <button class="btn" onclick="simulateCryptoDeposit()" id="simulateCryptoBtn" disabled>Simulate Deposit</button>
+
+                <!-- Create Fiat Deposit -->
+                <h4>Create Fiat Deposit</h4>
+                <div class="form-group">
+                    <label>Currency:</label>
+                    <select id="fiatDepositCurrency">
+                        <option value="USD">US Dollar (USD)</option>
+                        <option value="EUR">Euro (EUR)</option>
+                        <option value="GBP">British Pound (GBP)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Amount:</label>
+                    <input type="number" id="fiatDepositAmount" step="0.01" placeholder="100.00" value="100.00">
+                </div>
+                <div class="form-group">
+                    <label>Payment Method:</label>
+                    <select id="fiatPaymentMethod">
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="credit_card">Credit Card</option>
+                        <option value="paypal">PayPal</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="createFiatDeposit()" id="createFiatBtn" disabled>Create Fiat Deposit</button>
+
+                <div id="depositResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Withdrawals Section -->
+            <div class="section">
+                <h3>📤 Withdrawals</h3>
+                
+                <!-- Create Crypto Withdrawal -->
+                <h4>Create Crypto Withdrawal</h4>
+                <div class="form-group">
+                    <label>Currency:</label>
+                    <select id="withdrawalCurrency">
+                        <option value="BTC">Bitcoin (BTC)</option>
+                        <option value="ETH">Ethereum (ETH)</option>
+                        <option value="LTC">Litecoin (LTC)</option>
+                        <option value="BCH">Bitcoin Cash (BCH)</option>
+                        <option value="XRP">Ripple (XRP)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Amount:</label>
+                    <input type="number" id="withdrawalAmount" step="0.00000001" placeholder="0.001" value="0.001">
+                </div>
+                <div class="form-group">
+                    <label>To Address:</label>
+                    <input type="text" id="withdrawalAddress" placeholder="Destination wallet address">
+                </div>
+                <button class="btn" onclick="createWithdrawal()" id="createWithdrawalBtn" disabled>Create Withdrawal</button>
+
+                <!-- Verify Withdrawal -->
+                <h4>Verify Withdrawal</h4>
+                <div class="form-group">
+                    <label>Withdrawal ID:</label>
+                    <input type="number" id="verifyWithdrawalId" placeholder="Withdrawal ID">
+                </div>
+                <div class="form-group">
+                    <label>Verification Code:</label>
+                    <input type="text" id="verificationCode" placeholder="6-digit code" maxlength="6">
+                </div>
+                <button class="btn" onclick="verifyWithdrawal()" id="verifyWithdrawalBtn" disabled>Verify Withdrawal</button>
+
+                <div id="withdrawalResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Transaction History -->
+            <div class="section auth-section">
+                <h3>📊 Transaction History</h3>
+                <button class="btn" onclick="getDeposits()" id="getDepositsBtn" disabled>Get Deposits</button>
+                <button class="btn btn-secondary" onclick="getWithdrawals()" id="getWithdrawalsBtn" disabled>Get Withdrawals</button>
+                <div id="historyResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let authToken = null;
+
+        // Show result
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+            element.style.display = 'block';
+        }
+
+        // Update auth status
+        function updateAuthStatus(status) {
+            const statusElement = document.querySelector('#authStatus .status-indicator');
+            const textElement = document.querySelector('#authStatus p');
+            
+            if (status === 'success') {
+                statusElement.className = 'status-indicator success';
+                textElement.innerHTML = '<span class="status-indicator success"></span>Authentication: Logged in';
+                enableButtons();
+            } else {
+                statusElement.className = 'status-indicator error';
+                textElement.innerHTML = '<span class="status-indicator error"></span>Authentication: Failed';
+            }
+        }
+
+        // Enable buttons after login
+        function enableButtons() {
+            const buttons = [
+                'generateAddressBtn', 'simulateCryptoBtn', 'createFiatBtn',
+                'createWithdrawalBtn', 'verifyWithdrawalBtn', 'getDepositsBtn', 'getWithdrawalsBtn'
+            ];
+            buttons.forEach(id => {
+                document.getElementById(id).disabled = false;
+            });
+        }
+
+        // Make API request
+        async function makeRequest(method, endpoint, data = null) {
+            const url = `${API_BASE}${endpoint}`;
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            };
+
+            if (authToken) {
+                options.headers['Authorization'] = `Bearer ${authToken}`;
+            }
+
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+
+            try {
+                const response = await fetch(url, options);
+                const result = await response.json();
+                
+                return {
+                    success: response.ok,
+                    status: response.status,
+                    data: result
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+
+        // Authentication
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                showResult('authResult', 'Please enter email and password', 'error');
+                return;
+            }
+
+            showResult('authResult', 'Logging in...', 'info');
+
+            const response = await makeRequest('POST', '/auth/login', { email, password });
+
+            if (response.success && response.data.success) {
+                authToken = response.data.token;
+                showResult('authResult', `Login successful!\nToken: ${authToken.substring(0, 20)}...`, 'success');
+                updateAuthStatus('success');
+            } else {
+                const errorMsg = response.data.message || response.error || 'Login failed';
+                showResult('authResult', `Login failed: ${errorMsg}`, 'error');
+                updateAuthStatus('error');
+            }
+        }
+
+        // Generate Deposit Address
+        async function generateDepositAddress() {
+            const currency = document.getElementById('depositCurrency').value;
+            
+            showResult('depositAddressResult', 'Generating deposit address...', 'info');
+
+            const response = await makeRequest('POST', '/deposits/generate-address', { currency });
+
+            if (response.success && response.data.success) {
+                const data = response.data.data;
+                const message = `Deposit Address Generated:
+Currency: ${data.currency}
+Address: ${data.address}
+QR Code: ${data.qr_code}
+
+Instructions:
+${data.instructions.join('\n')}`;
+                
+                showResult('depositAddressResult', message, 'success');
+                document.getElementById('cryptoWalletAddress').value = data.address;
+            } else {
+                const errorMsg = response.data.message || response.error || 'Failed to generate address';
+                showResult('depositAddressResult', `Error: ${errorMsg}`, 'error');
+            }
+        }
+
+        // Simulate Crypto Deposit
+        async function simulateCryptoDeposit() {
+            const currency = document.getElementById('depositCurrency').value;
+            const amount = document.getElementById('cryptoDepositAmount').value;
+            const walletAddress = document.getElementById('cryptoWalletAddress').value;
+
+            if (!amount || !walletAddress) {
+                showResult('depositResult', 'Please generate address and enter amount first', 'error');
+                return;
+            }
+
+            showResult('depositResult', 'Simulating crypto deposit...', 'info');
+
+            const response = await makeRequest('POST', '/deposits/simulate-crypto', {
+                currency,
+                amount: parseFloat(amount),
+                wallet_address: walletAddress
+            });
+
+            if (response.success && response.data.success) {
+                const deposit = response.data.data;
+                const message = `Crypto Deposit Simulated:
+ID: ${deposit.id}
+Currency: ${deposit.currency}
+Amount: ${deposit.amount}
+Status: ${deposit.status}
+Confirmations: ${deposit.confirmations}/${deposit.required_confirmations}
+TXID: ${deposit.txid}`;
+                
+                showResult('depositResult', message, 'success');
+            } else {
+                const errorMsg = response.data.message || response.error || 'Failed to simulate deposit';
+                showResult('depositResult', `Error: ${errorMsg}`, 'error');
+            }
+        }
+
+        // Create Fiat Deposit
+        async function createFiatDeposit() {
+            const currency = document.getElementById('fiatDepositCurrency').value;
+            const amount = document.getElementById('fiatDepositAmount').value;
+            const paymentMethod = document.getElementById('fiatPaymentMethod').value;
+
+            if (!amount) {
+                showResult('depositResult', 'Please enter amount', 'error');
+                return;
+            }
+
+            showResult('depositResult', 'Creating fiat deposit...', 'info');
+
+            const response = await makeRequest('POST', '/deposits/fiat', {
+                currency,
+                amount: parseFloat(amount),
+                payment_method: paymentMethod,
+                payment_details: {
+                    account_number: '1234567890',
+                    routing_number: '123456789'
+                }
+            });
+
+            if (response.success && response.data.success) {
+                const deposit = response.data.data;
+                const message = `Fiat Deposit Created:
+ID: ${deposit.id}
+Currency: ${deposit.currency}
+Amount: ${deposit.amount}
+Payment Method: ${deposit.payment_method}
+Status: ${deposit.status}`;
+                
+                showResult('depositResult', message, 'success');
+            } else {
+                const errorMsg = response.data.message || response.error || 'Failed to create deposit';
+                showResult('depositResult', `Error: ${errorMsg}`, 'error');
+            }
+        }
+
+        // Create Withdrawal
+        async function createWithdrawal() {
+            const currency = document.getElementById('withdrawalCurrency').value;
+            const amount = document.getElementById('withdrawalAmount').value;
+            const toAddress = document.getElementById('withdrawalAddress').value;
+
+            if (!amount || !toAddress) {
+                showResult('withdrawalResult', 'Please enter amount and destination address', 'error');
+                return;
+            }
+
+            showResult('withdrawalResult', 'Creating withdrawal request...', 'info');
+
+            const response = await makeRequest('POST', '/withdrawals', {
+                currency,
+                amount: parseFloat(amount),
+                type: 'crypto',
+                to_address: toAddress
+            });
+
+            if (response.success && response.data.success) {
+                const withdrawal = response.data.data;
+                const message = `Withdrawal Request Created:
+ID: ${withdrawal.id}
+Currency: ${withdrawal.currency}
+Amount: ${withdrawal.amount}
+Fee: ${withdrawal.fee}
+Net Amount: ${withdrawal.net_amount}
+To Address: ${withdrawal.to_address}
+Status: ${withdrawal.status}
+
+${response.data.message}`;
+                
+                showResult('withdrawalResult', message, 'success');
+                document.getElementById('verifyWithdrawalId').value = withdrawal.id;
+            } else {
+                const errorMsg = response.data.message || response.error || 'Failed to create withdrawal';
+                showResult('withdrawalResult', `Error: ${errorMsg}`, 'error');
+            }
+        }
+
+        // Verify Withdrawal
+        async function verifyWithdrawal() {
+            const withdrawalId = document.getElementById('verifyWithdrawalId').value;
+            const code = document.getElementById('verificationCode').value;
+
+            if (!withdrawalId || !code) {
+                showResult('withdrawalResult', 'Please enter withdrawal ID and verification code', 'error');
+                return;
+            }
+
+            showResult('withdrawalResult', 'Verifying withdrawal...', 'info');
+
+            const response = await makeRequest('POST', `/withdrawals/${withdrawalId}/verify`, {
+                verification_code: code
+            });
+
+            if (response.success && response.data.success) {
+                const message = `Withdrawal Verification:
+${response.data.message}
+Requires 2FA: ${response.data.requires_2fa ? 'Yes' : 'No'}`;
+                
+                showResult('withdrawalResult', message, 'success');
+            } else {
+                const errorMsg = response.data.message || response.error || 'Failed to verify withdrawal';
+                showResult('withdrawalResult', `Error: ${errorMsg}`, 'error');
+            }
+        }
+
+        // Get Deposits
+        async function getDeposits() {
+            showResult('historyResult', 'Loading deposits...', 'info');
+
+            const response = await makeRequest('GET', '/deposits');
+
+            if (response.success && response.data.success) {
+                const deposits = response.data.data.data;
+                const summary = response.data.summary;
+                
+                let message = `Deposit Summary:
+Total Deposits: ${summary.total_deposits}
+Completed: ${summary.completed_deposits}
+Pending: ${summary.pending_deposits}
+Total Amount: ${summary.total_amount}
+
+Recent Deposits:
+`;
+                
+                deposits.slice(0, 5).forEach(deposit => {
+                    message += `
+ID: ${deposit.id} | ${deposit.currency} ${deposit.amount} | ${deposit.status} | ${deposit.created_at}`;
+                });
+                
+                showResult('historyResult', message, 'success');
+            } else {
+                const errorMsg = response.data.message || response.error || 'Failed to get deposits';
+                showResult('historyResult', `Error: ${errorMsg}`, 'error');
+            }
+        }
+
+        // Get Withdrawals
+        async function getWithdrawals() {
+            showResult('historyResult', 'Loading withdrawals...', 'info');
+
+            const response = await makeRequest('GET', '/withdrawals');
+
+            if (response.success && response.data.success) {
+                const withdrawals = response.data.data.data;
+                const summary = response.data.summary;
+                
+                let message = `Withdrawal Summary:
+Total Withdrawals: ${summary.total_withdrawals}
+Completed: ${summary.completed_withdrawals}
+Pending: ${summary.pending_withdrawals}
+Total Amount: ${summary.total_amount}
+
+Recent Withdrawals:
+`;
+                
+                withdrawals.slice(0, 5).forEach(withdrawal => {
+                    message += `
+ID: ${withdrawal.id} | ${withdrawal.currency} ${withdrawal.amount} | ${withdrawal.status} | ${withdrawal.created_at}`;
+                });
+                
+                showResult('historyResult', message, 'success');
+            } else {
+                const errorMsg = response.data.message || response.error || 'Failed to get withdrawals';
+                showResult('historyResult', `Error: ${errorMsg}`, 'error');
+            }
+        }
+
+        // Auto-format verification code input
+        document.getElementById('verificationCode').addEventListener('input', function(e) {
+            this.value = this.value.replace(/\D/g, '').slice(0, 6);
+        });
+    </script>
+</body>
+</html>

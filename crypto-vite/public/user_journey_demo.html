@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Exchange User Journey Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .step {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .step-number {
+            background: #4CAF50;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        .step-title {
+            display: inline-block;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .money-flow {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-family: monospace;
+        }
+        .balance-box {
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4CAF50;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        .trade-example {
+            background: rgba(255, 193, 7, 0.2);
+            border: 2px solid #FFC107;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        .flow-arrow {
+            text-align: center;
+            font-size: 30px;
+            margin: 10px 0;
+            color: #4CAF50;
+        }
+        .demo-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        .demo-button:hover {
+            background: #45a049;
+        }
+        .wallet-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .wallet-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .currency-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .simulation-area {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Crypto Exchange User Journey</h1>
+            <p>Complete step-by-step guide on how money flows in our crypto exchange</p>
+        </div>
+
+        <!-- Step 1: Registration -->
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-title">🔐 Registration & Login</div>
+            <p><strong>What happens:</strong> User creates account and gets initial wallets</p>
+            
+            <div class="balance-box">
+                <h4>Initial Balance After Registration:</h4>
+                <div class="wallet-display">
+                    <div class="wallet-item">
+                        <div class="currency-icon">💵</div>
+                        <div>USD: $10,000.00</div>
+                    </div>
+                    <div class="wallet-item">
+                        <div class="currency-icon">₿</div>
+                        <div>BTC: 0.00000000</div>
+                    </div>
+                    <div class="wallet-item">
+                        <div class="currency-icon">Ξ</div>
+                        <div>ETH: 0.00000000</div>
+                    </div>
+                    <div class="wallet-item">
+                        <div class="currency-icon">Ł</div>
+                        <div>LTC: 0.00000000</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Deposit -->
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-title">💳 Deposit Money</div>
+            
+            <h4>Option A: Fiat Deposit (USD)</h4>
+            <div class="money-flow">
+                Bank Account ($5,000) → Exchange USD Wallet → User Balance
+            </div>
+            
+            <h4>Option B: Crypto Deposit (Bitcoin)</h4>
+            <div class="money-flow">
+                External BTC Wallet (0.1 BTC) → Exchange BTC Address → User Balance
+            </div>
+
+            <button class="demo-button" onclick="simulateDeposit()">Simulate $5,000 USD Deposit</button>
+            <button class="demo-button" onclick="simulateCryptoDeposit()">Simulate 0.1 BTC Deposit</button>
+        </div>
+
+        <!-- Step 3: Portfolio View -->
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-title">📊 View Portfolio & Markets</div>
+            <p>User can see all balances, current prices, and market data</p>
+            
+            <div id="portfolioDisplay" class="balance-box">
+                <h4>Current Portfolio:</h4>
+                <div id="currentBalances" class="wallet-display">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+                <div id="totalValue" style="text-align: center; font-size: 20px; margin-top: 15px;">
+                    Total Portfolio Value: $10,000.00
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Trading -->
+        <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-title">🔄 Trading (Money Exchange)</div>
+            
+            <div class="trade-example">
+                <h4>Example Trade: Buy 0.1 BTC with USD</h4>
+                <p><strong>Current BTC Price:</strong> $45,000</p>
+                <p><strong>Trade Amount:</strong> 0.1 BTC</p>
+                <p><strong>Total Cost:</strong> $4,500 + $45 fees = $4,545</p>
+                
+                <div class="money-flow">
+                    <div>BEFORE TRADE:</div>
+                    <div>User USD: $15,000 | User BTC: 0.1</div>
+                    <div class="flow-arrow">⬇️</div>
+                    <div>TRADE EXECUTION:</div>
+                    <div>User pays: $4,545 USD → Receives: 0.1 BTC</div>
+                    <div class="flow-arrow">⬇️</div>
+                    <div>AFTER TRADE:</div>
+                    <div>User USD: $10,455 | User BTC: 0.2</div>
+                </div>
+            </div>
+
+            <button class="demo-button" onclick="simulateBuyTrade()">Simulate Buy 0.1 BTC</button>
+            <button class="demo-button" onclick="simulateSellTrade()">Simulate Sell 0.05 BTC</button>
+        </div>
+
+        <!-- Step 5: Withdrawal -->
+        <div class="step">
+            <div class="step-number">5</div>
+            <div class="step-title">💸 Withdrawal</div>
+            
+            <h4>Fiat Withdrawal:</h4>
+            <div class="money-flow">
+                User USD Balance → Exchange Processing → Bank Account
+            </div>
+            
+            <h4>Crypto Withdrawal:</h4>
+            <div class="money-flow">
+                User BTC Balance → Exchange Processing → External BTC Wallet
+            </div>
+
+            <button class="demo-button" onclick="simulateWithdrawal()">Simulate $2,000 USD Withdrawal</button>
+        </div>
+
+        <!-- Simulation Area -->
+        <div class="simulation-area">
+            <h3>💡 Interactive Simulation</h3>
+            <p>Click the buttons above to see how money flows through the exchange!</p>
+            <div id="simulationLog" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; font-family: monospace; height: 200px; overflow-y: auto;">
+                <div>🚀 Simulation ready! Click buttons above to see money flow...</div>
+            </div>
+            <button class="demo-button" onclick="resetSimulation()">Reset Simulation</button>
+        </div>
+    </div>
+
+    <script>
+        // Simulation state
+        let userBalances = {
+            USD: 10000.00,
+            BTC: 0.00000000,
+            ETH: 0.00000000,
+            LTC: 0.00000000
+        };
+
+        const prices = {
+            BTC: 45000,
+            ETH: 3000,
+            LTC: 100
+        };
+
+        function log(message) {
+            const logArea = document.getElementById('simulationLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logArea.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        function updateDisplay() {
+            const balancesDiv = document.getElementById('currentBalances');
+            const totalValueDiv = document.getElementById('totalValue');
+            
+            balancesDiv.innerHTML = `
+                <div class="wallet-item">
+                    <div class="currency-icon">💵</div>
+                    <div>USD: $${userBalances.USD.toFixed(2)}</div>
+                </div>
+                <div class="wallet-item">
+                    <div class="currency-icon">₿</div>
+                    <div>BTC: ${userBalances.BTC.toFixed(8)}</div>
+                </div>
+                <div class="wallet-item">
+                    <div class="currency-icon">Ξ</div>
+                    <div>ETH: ${userBalances.ETH.toFixed(8)}</div>
+                </div>
+                <div class="wallet-item">
+                    <div class="currency-icon">Ł</div>
+                    <div>LTC: ${userBalances.LTC.toFixed(8)}</div>
+                </div>
+            `;
+
+            const totalValue = userBalances.USD + 
+                              (userBalances.BTC * prices.BTC) + 
+                              (userBalances.ETH * prices.ETH) + 
+                              (userBalances.LTC * prices.LTC);
+            
+            totalValueDiv.innerHTML = `Total Portfolio Value: $${totalValue.toFixed(2)}`;
+        }
+
+        function simulateDeposit() {
+            userBalances.USD += 5000;
+            log('💳 DEPOSIT: +$5,000 USD deposited from bank account');
+            log(`💰 New USD Balance: $${userBalances.USD.toFixed(2)}`);
+            updateDisplay();
+        }
+
+        function simulateCryptoDeposit() {
+            userBalances.BTC += 0.1;
+            log('₿ CRYPTO DEPOSIT: +0.1 BTC deposited from external wallet');
+            log(`💰 New BTC Balance: ${userBalances.BTC.toFixed(8)} BTC`);
+            updateDisplay();
+        }
+
+        function simulateBuyTrade() {
+            const btcAmount = 0.1;
+            const cost = btcAmount * prices.BTC;
+            const fee = cost * 0.01; // 1% fee
+            const totalCost = cost + fee;
+
+            if (userBalances.USD >= totalCost) {
+                userBalances.USD -= totalCost;
+                userBalances.BTC += btcAmount;
+                
+                log(`🔄 BUY TRADE: Bought ${btcAmount} BTC for $${cost.toFixed(2)} + $${fee.toFixed(2)} fee`);
+                log(`💰 New Balances: USD: $${userBalances.USD.toFixed(2)}, BTC: ${userBalances.BTC.toFixed(8)}`);
+                updateDisplay();
+            } else {
+                log('❌ TRADE FAILED: Insufficient USD balance');
+            }
+        }
+
+        function simulateSellTrade() {
+            const btcAmount = 0.05;
+            
+            if (userBalances.BTC >= btcAmount) {
+                const revenue = btcAmount * prices.BTC;
+                const fee = revenue * 0.01; // 1% fee
+                const netRevenue = revenue - fee;
+
+                userBalances.BTC -= btcAmount;
+                userBalances.USD += netRevenue;
+                
+                log(`🔄 SELL TRADE: Sold ${btcAmount} BTC for $${revenue.toFixed(2)} - $${fee.toFixed(2)} fee`);
+                log(`💰 New Balances: USD: $${userBalances.USD.toFixed(2)}, BTC: ${userBalances.BTC.toFixed(8)}`);
+                updateDisplay();
+            } else {
+                log('❌ TRADE FAILED: Insufficient BTC balance');
+            }
+        }
+
+        function simulateWithdrawal() {
+            const amount = 2000;
+            
+            if (userBalances.USD >= amount) {
+                userBalances.USD -= amount;
+                log(`💸 WITHDRAWAL: $${amount} USD withdrawn to bank account`);
+                log(`💰 New USD Balance: $${userBalances.USD.toFixed(2)}`);
+                updateDisplay();
+            } else {
+                log('❌ WITHDRAWAL FAILED: Insufficient USD balance');
+            }
+        }
+
+        function resetSimulation() {
+            userBalances = {
+                USD: 10000.00,
+                BTC: 0.00000000,
+                ETH: 0.00000000,
+                LTC: 0.00000000
+            };
+            document.getElementById('simulationLog').innerHTML = '<div>🔄 Simulation reset! Starting with $10,000 USD...</div>';
+            updateDisplay();
+        }
+
+        // Initialize display
+        updateDisplay();
+    </script>
+</body>
+</html>

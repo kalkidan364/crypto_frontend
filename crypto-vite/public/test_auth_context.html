@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Context Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Auth Context Test</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Navigate to Auth Test Page</h3>
+        <p>Click the link below to test the AuthProvider:</p>
+        <a href="http://localhost:5174/auth-test" target="_blank">Open Auth Test Page</a>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: Navigate to Admin Page</h3>
+        <p>Click the link below to test the AdminRoute:</p>
+        <a href="http://localhost:5174/admin" target="_blank">Open Admin Page</a>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: Login First</h3>
+        <p>If you get auth errors, login first:</p>
+        <a href="http://localhost:5174/login" target="_blank">Login Page</a>
+        <p>Use: admin@cryptoexchange.com / admin123</p>
+    </div>
+    
+    <div class="test-section">
+        <h3>Instructions</h3>
+        <ol>
+            <li>Open browser console (F12)</li>
+            <li>Click on "Open Auth Test Page" to see if AuthProvider works</li>
+            <li>If that works, try the Admin Page</li>
+            <li>Check console for any error messages</li>
+        </ol>
+    </div>
+</body>
+</html>

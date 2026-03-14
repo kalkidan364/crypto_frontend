@@ -1,16 +1,145 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import apiClient from '../utils/api';
+import { initiateOAuthFlow } from '../utils/oauthHandler';
+import { handleOAuthRedirect } from '../utils/forceRedirect';
+import { debugOAuthFlow, forceRedirectDebug, monitorAuthState } from '../utils/debugOAuth';
+import OAuthCallbackHandler from '../components/auth/OAuthCallbackHandler';
+import TwoFactorVerification from '../components/auth/TwoFactorVerification';
+import OtpVerification from '../components/auth/OtpVerification';
 import '../styles/components/login.css';
+import '../styles/components/security.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const authContext = useAuth();
+  const { login, isAuthenticated, user, isAdmin, loading } = authContext;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showTwoFactor, setShowTwoFactor] = useState(false);
+  const [toasts, setToasts] = useState([]);
+  const [oauthProviders, setOauthProviders] = useState({});
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [otpUserData, setOtpUserData] = useState(null);
   const cursorRef = useRef(null);
   const cursorDotRef = useRef(null);
+
+  const showToast = (type, message) => {
+    const id = Date.now();
+    const toast = { id, type, message };
+    setToasts(prev => [...prev, toast]);
+    
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 5000);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  // Debug OAuth flow on component mount
+  useEffect(() => {
+    debugOAuthFlow();
+    monitorAuthState(authContext);
+  }, [authContext]);
+
+  // Redirect if already authenticated - but don't interfere with OAuth callback
+  useEffect(() => {
+    // Only redirect if we're not processing an OAuth callback
+    const authSuccess = searchParams.get('auth_success');
+    const token = searchParams.get('token');
+    const userParam = searchParams.get('user');
+    
+    // Skip auto-redirect if OAuth callback is being processed
+    if (authSuccess === 'true' && token && userParam) {
+      return;
+    }
+    
+    if (isAuthenticated && !loading) {
+      // Redirect admin users to admin panel, regular users to dashboard
+      const redirectPath = isAdmin ? '/admin' : '/dashboard';
+      console.log('Login - Auto redirecting authenticated user to:', redirectPath);
+      
+      // Use debug redirect for better logging
+      forceRedirectDebug(redirectPath, 'Auto-redirect authenticated user');
+    }
+  }, [isAuthenticated, isAdmin, navigate, loading, searchParams]);
+
+  // Handle OAuth callback with dedicated handler
+  const handleOAuthSuccess = (userData) => {
+    showToast('success', 'Successfully logged in!');
+    console.log('OAuth success - user:', userData);
+    
+    // Force immediate redirect after OAuth success
+    const redirectPath = userData.is_admin ? '/admin' : '/dashboard';
+    console.log('Login - OAuth success, FORCING redirect to:', redirectPath);
+    
+    // Use debug redirect for better logging
+    forceRedirectDebug(redirectPath, 'OAuth Success');
+  };
+
+  const handleOAuthError = (message) => {
+    showToast('error', message);
+    console.error('OAuth error:', message);
+  };
+
+  // Handle OTP requirement from OAuth
+  const handleOAuthOtpRequired = (userData) => {
+    console.log('OAuth OTP required for user:', userData);
+    showToast('info', 'Please verify your email with the OTP code sent to you');
+    setOtpUserData(userData);
+    setShowOtpVerification(true);
+  };
+
+  // Handle OTP verification success
+  const handleOtpSuccess = async () => {
+    setShowOtpVerification(false);
+    showToast('success', 'Email verified successfully!');
+    
+    // Fetch updated user data from backend
+    try {
+      await authContext.fetchUser();
+      console.log('User data refreshed after OTP verification');
+    } catch (error) {
+      console.error('Failed to fetch updated user:', error);
+    }
+    
+    // Redirect to appropriate dashboard
+    const redirectPath = otpUserData?.is_admin ? '/admin' : '/dashboard';
+    setTimeout(() => {
+      forceRedirectDebug(redirectPath, 'OTP Verification Success');
+    }, 1000);
+  };
+
+  // Handle OTP verification cancel
+  const handleOtpCancel = () => {
+    setShowOtpVerification(false);
+    showToast('warning', 'Email verification is required to access your account.');
+  };
+
+  // Load OAuth providers
+  useEffect(() => {
+    fetchOAuthProviders();
+  }, []);
+
+  const fetchOAuthProviders = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/auth/providers');
+      const data = await response.json();
+      if (data.success) {
+        setOauthProviders(data.providers);
+      }
+    } catch (error) {
+      console.error('Failed to load OAuth providers:', error);
+    }
+  };
 
   // Custom cursor
   useEffect(() => {
@@ -42,16 +171,93 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
-    // Simulate login
-    setTimeout(() => {
+    // Clear any old tokens before attempting login
+    localStorage.removeItem('auth_token');
+    apiClient.setToken(null);
+
+    try {
+      const result = await login({ email, password });
+      
+      console.log('Login result:', result); // Debug log
+      
+      if (result.success) {
+        console.log('User data:', result.user); // Debug log
+        console.log('Is admin:', result.user?.is_admin); // Debug log
+        
+        // Check if user is admin using the returned user data
+        if (result.user?.is_admin) {
+          console.log('Redirecting to admin panel'); // Debug log
+          navigate('/admin');
+        } else {
+          console.log('Redirecting to dashboard'); // Debug log
+          navigate('/dashboard');
+        }
+      } else {
+        // Check if 2FA is required
+        if (result.message && result.message.includes('2FA') || result.requires_2fa) {
+          setShowTwoFactor(true);
+          showToast('info', 'Please enter your 2FA code to continue');
+        } else {
+          setError(result.message || 'Login failed. Please try again.');
+        }
+      }
+    } catch (error) {
+      setError('An unexpected error occurred. Please try again.');
+      console.error('Login error:', error);
+    } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleTwoFactorSuccess = (result) => {
+    setShowTwoFactor(false);
+    showToast('success', 'Login successful!');
+    
+    // Check if user is admin
+    if (result.user?.is_admin) {
+      navigate('/admin');
+    } else {
       navigate('/dashboard');
-    }, 1500);
+    }
+  };
+
+  const handleTwoFactorCancel = () => {
+    setShowTwoFactor(false);
+    setError('');
+  };
+
+  const handleOAuthLogin = async (provider) => {
+    try {
+      setIsLoading(true);
+      await initiateOAuthFlow(provider, window.location.origin + '/login');
+    } catch (error) {
+      console.error(`${provider} OAuth error:`, error);
+      showToast('error', `Failed to connect to ${provider}`);
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="login-page">
+      {/* OAuth Callback Handler */}
+      <OAuthCallbackHandler 
+        onSuccess={handleOAuthSuccess}
+        onError={handleOAuthError}
+        onOtpRequired={handleOAuthOtpRequired}
+      />
+      
+      {/* Toast Notifications */}
+      <div className="toast-container">
+        {toasts.map(toast => (
+          <div key={toast.id} className={`toast toast-${toast.type}`}>
+            <span>{toast.message}</span>
+            <button onClick={() => removeToast(toast.id)}>×</button>
+          </div>
+        ))}
+      </div>
+
       <div ref={cursorRef} className="login-cursor"></div>
       <div ref={cursorDotRef} className="login-cursor-dot"></div>
 
@@ -125,6 +331,13 @@ const Login = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="login-form">
+            {error && (
+              <div className="error-message">
+                <span className="error-icon">⚠️</span>
+                {error}
+              </div>
+            )}
+            
             <div className="form-group">
               <label htmlFor="email">Email Address</label>
               <div className="input-wrapper">
@@ -201,31 +414,38 @@ const Login = () => {
           </div>
 
           <div className="social-login">
-            <button className="social-btn">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              Google
-            </button>
-            <button className="social-btn">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
-              </svg>
-              Facebook
-            </button>
-            <button className="social-btn">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-              </svg>
-              GitHub
-            </button>
+            {oauthProviders.google?.enabled && (
+              <button 
+                className="social-btn google-btn" 
+                onClick={() => handleOAuthLogin('google')}
+                disabled={isLoading}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC04" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+              </button>
+            )}
+            
+            {oauthProviders.apple?.enabled && (
+              <button 
+                className="social-btn apple-btn" 
+                onClick={() => handleOAuthLogin('apple')}
+                disabled={isLoading}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
+                </svg>
+                Continue with Apple
+              </button>
+            )}
           </div>
 
           <div className="signup-prompt">
-            Don't have an account? <a href="#signup">Sign up</a>
+            Don't have an account? <Link to="/register">Sign up</Link>
           </div>
 
           <div className="login-footer">
@@ -237,6 +457,28 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      {/* Two-Factor Authentication Modal */}
+      {showTwoFactor && (
+        <TwoFactorVerification
+          email={email}
+          onSuccess={handleTwoFactorSuccess}
+          onCancel={handleTwoFactorCancel}
+          showToast={showToast}
+        />
+      )}
+
+      {/* OTP Verification Modal for OAuth */}
+      {showOtpVerification && otpUserData && (
+        <OtpVerification
+          identifier={otpUserData.email}
+          type="email"
+          purpose="registration"
+          onSuccess={handleOtpSuccess}
+          onCancel={handleOtpCancel}
+          showToast={showToast}
+        />
+      )}
     </div>
   );
 };

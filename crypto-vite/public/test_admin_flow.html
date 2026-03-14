@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Flow Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .step h3 { margin-top: 0; color: #333; }
+        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 5px; }
+        .btn:hover { background: #0056b3; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        .code { background: #f8f9fa; padding: 10px; border-radius: 3px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Admin Dashboard Flow Test</h1>
+        <p>Follow these steps to test the admin dashboard functionality:</p>
+        
+        <div class="step info">
+            <h3>Step 1: Check Backend Status</h3>
+            <p>Verify the Laravel backend is running:</p>
+            <div class="code">http://127.0.0.1:8000/api/auth/login</div>
+            <a href="http://127.0.0.1:8000/api/auth/login" target="_blank" class="btn">Test Backend</a>
+        </div>
+        
+        <div class="step info">
+            <h3>Step 2: Test Auth Context</h3>
+            <p>Check if the AuthProvider is working:</p>
+            <a href="http://localhost:5174/auth-test" target="_blank" class="btn">Test Auth Context</a>
+        </div>
+        
+        <div class="step info">
+            <h3>Step 3: Login as Admin</h3>
+            <p>Login with admin credentials:</p>
+            <div class="code">
+                Email: admin@cryptoexchange.com<br>
+                Password: admin123
+            </div>
+            <a href="http://localhost:5174/login" target="_blank" class="btn">Login Page</a>
+        </div>
+        
+        <div class="step info">
+            <h3>Step 4: Access Admin Dashboard</h3>
+            <p>After login, access the admin dashboard:</p>
+            <a href="http://localhost:5174/admin" target="_blank" class="btn">Admin Dashboard</a>
+        </div>
+        
+        <div class="step success">
+            <h3>Expected Results</h3>
+            <ul>
+                <li>✅ Backend should return JSON response</li>
+                <li>✅ Auth test should show AuthProvider working</li>
+                <li>✅ Login should succeed and redirect admin users to /admin</li>
+                <li>✅ Admin dashboard should load with real data</li>
+            </ul>
+        </div>
+        
+        <div class="step error">
+            <h3>Troubleshooting</h3>
+            <p>If you encounter errors:</p>
+            <ol>
+                <li>Open browser console (F12) to see error messages</li>
+                <li>Check if both servers are running (Laravel on :8000, Vite on :5174)</li>
+                <li>Clear localStorage and try again</li>
+                <li>Check network tab for failed API requests</li>
+            </ol>
+        </div>
+        
+        <div class="step">
+            <h3>Quick Actions</h3>
+            <button onclick="clearStorage()" class="btn">Clear LocalStorage</button>
+            <button onclick="checkServers()" class="btn">Check Servers</button>
+            <button onclick="testAPI()" class="btn">Test API</button>
+        </div>
+    </div>
+
+    <script>
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            alert('Storage cleared! Try logging in again.');
+        }
+        
+        async function checkServers() {
+            const results = [];
+            
+            // Check Vite dev server
+            try {
+                const viteResponse = await fetch('http://localhost:5174/');
+                results.push(`✅ Vite server: ${viteResponse.status}`);
+            } catch (e) {
+                results.push(`❌ Vite server: ${e.message}`);
+            }
+            
+            // Check Laravel server
+            try {
+                const laravelResponse = await fetch('http://127.0.0.1:8000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                results.push(`✅ Laravel server: ${laravelResponse.status}`);
+            } catch (e) {
+                results.push(`❌ Laravel server: ${e.message}`);
+            }
+            
+            alert(results.join('\n'));
+        }
+        
+        async function testAPI() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@cryptoexchange.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ API Test Success!\nToken: ' + data.token.substring(0, 20) + '...\nUser: ' + data.user.name);
+                } else {
+                    alert('❌ API Test Failed: ' + data.message);
+                }
+            } catch (error) {
+                alert('❌ API Test Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
