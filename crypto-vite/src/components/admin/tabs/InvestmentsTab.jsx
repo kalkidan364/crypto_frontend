@@ -37,18 +37,9 @@ const InvestmentsTab = ({ showToast }) => {
   };
   const handlePlanAction = async (planId, action) => {
     try {
-      const response = await fetch(`/api/admin/investment-plans/${planId}/${action}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        showToast('success', `Plan ${action}d successfully`);
-        fetchInvestmentData();
-      }
+      // Investment plans API not implemented yet
+      showToast('success', `Plan ${action}d successfully (demo)`);
+      fetchInvestmentData();
     } catch (error) {
       console.error(`Failed to ${action} plan:`, error);
       showToast('success', `Plan ${action}d successfully (demo)`);
@@ -105,7 +96,7 @@ const InvestmentsTab = ({ showToast }) => {
     name: (
       <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
         <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{width: '24px', height: '24px', fontSize: '10px'}}>
-          {plan.name.charAt(0)}
+          {plan.name ? plan.name.charAt(0) : '?'}
         </div>
         <div>
           <div style={{fontSize: '12px', fontWeight: '500'}}>{plan.name}</div>
@@ -171,44 +162,52 @@ const InvestmentsTab = ({ showToast }) => {
     { key: 'status', label: 'Status' }
   ];
 
-  const formatUserInvestmentRow = (investment, index) => ({
-    user: (
-      <div className="user-chip">
-        <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{color: 'var(--bg-primary)', width: '20px', height: '20px', fontSize: '8px'}}>
-          {investment.user?.split(' ').map(n => n[0]).join('') || 'U'}
+  const formatUserInvestmentRow = (investment, index) => {
+    const userName = typeof investment.user === 'string' 
+      ? investment.user 
+      : investment.user?.name || investment.user?.email || 'Unknown User';
+    
+    const userInitials = userName.split(' ').map(n => n[0]).join('') || 'U';
+    
+    return {
+      user: (
+        <div className="user-chip">
+          <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{color: 'var(--bg-primary)', width: '20px', height: '20px', fontSize: '8px'}}>
+            {userInitials}
+          </div>
+          <span style={{fontSize: '12px'}}>{userName}</span>
         </div>
-        <span style={{fontSize: '12px'}}>{investment.user}</span>
-      </div>
-    ),
-    plan: (
-      <span style={{fontSize: '12px', color: 'var(--accent-cyan)'}}>{investment.plan_name}</span>
-    ),
-    amount: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px'}}>
-        ${investment.amount.toLocaleString()}
-      </span>
-    ),
-    startDate: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-tertiary)'}}>
-        {investment.start_date}
-      </span>
-    ),
-    endDate: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-tertiary)'}}>
-        {investment.end_date}
-      </span>
-    ),
-    currentValue: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent-green)'}}>
-        ${investment.current_value.toLocaleString()}
-      </span>
-    ),
-    status: (
-      <span className={`badge ${investment.status}`}>
-        {investment.status.toUpperCase()}
-      </span>
-    )
-  });
+      ),
+      plan: (
+        <span style={{fontSize: '12px', color: 'var(--accent-cyan)'}}>{investment.plan_name}</span>
+      ),
+      amount: (
+        <span style={{fontFamily: 'var(--mono)', fontSize: '11px'}}>
+          ${investment.amount.toLocaleString()}
+        </span>
+      ),
+      startDate: (
+        <span style={{fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-tertiary)'}}>
+          {investment.start_date}
+        </span>
+      ),
+      endDate: (
+        <span style={{fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-tertiary)'}}>
+          {investment.end_date}
+        </span>
+      ),
+      currentValue: (
+        <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent-green)'}}>
+          ${investment.current_value.toLocaleString()}
+        </span>
+      ),
+      status: (
+        <span className={`badge ${investment.status}`}>
+          {investment.status.toUpperCase()}
+        </span>
+      )
+    };
+  };
 
   if (loading) {
     return (
@@ -310,7 +309,7 @@ const InvestmentsTab = ({ showToast }) => {
               <div key={plan.id} className="performance-item">
                 <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
                   <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{width: '20px', height: '20px', fontSize: '8px'}}>
-                    {plan.name.charAt(0)}
+                    {plan.name ? plan.name.charAt(0) : '?'}
                   </div>
                   <div>
                     <div style={{fontSize: '12px', fontWeight: '500'}}>{plan.name}</div>
@@ -332,27 +331,35 @@ const InvestmentsTab = ({ showToast }) => {
 
         <Panel title="Recent Investments">
           <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-            {userInvestments.slice(0, 4).map((investment, index) => (
-              <div key={investment.id} className="recent-investment-item">
-                <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
-                  <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{width: '20px', height: '20px', fontSize: '8px'}}>
-                    {investment.user?.split(' ').map(n => n[0]).join('') || 'U'}
+            {userInvestments.slice(0, 4).map((investment, index) => {
+              const userName = typeof investment.user === 'string' 
+                ? investment.user 
+                : investment.user?.name || investment.user?.email || 'Unknown User';
+              
+              const userInitials = userName.split(' ').map(n => n[0]).join('') || 'U';
+              
+              return (
+                <div key={investment.id} className="recent-investment-item">
+                  <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
+                    <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{width: '20px', height: '20px', fontSize: '8px'}}>
+                      {userInitials}
+                    </div>
+                    <div>
+                      <div style={{fontSize: '12px', fontWeight: '500'}}>{userName}</div>
+                      <div style={{fontSize: '10px', color: 'var(--text-tertiary)'}}>{investment.plan_name}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div style={{fontSize: '12px', fontWeight: '500'}}>{investment.user}</div>
-                    <div style={{fontSize: '10px', color: 'var(--text-tertiary)'}}>{investment.plan_name}</div>
+                  <div style={{textAlign: 'right'}}>
+                    <div style={{fontSize: '12px', color: 'var(--accent-cyan)', fontFamily: 'var(--mono)'}}>
+                      ${investment.amount.toLocaleString()}
+                    </div>
+                    <div style={{fontSize: '10px', color: 'var(--text-tertiary)'}}>
+                      {investment.start_date}
+                    </div>
                   </div>
                 </div>
-                <div style={{textAlign: 'right'}}>
-                  <div style={{fontSize: '12px', color: 'var(--accent-cyan)', fontFamily: 'var(--mono)'}}>
-                    ${investment.amount.toLocaleString()}
-                  </div>
-                  <div style={{fontSize: '10px', color: 'var(--text-tertiary)'}}>
-                    {investment.start_date}
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Panel>
       </div>

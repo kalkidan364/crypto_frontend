@@ -1,13 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminTopbar from './AdminTopbar';
 import AdminSidebar from './AdminSidebar';
 import AdminToast from './AdminToast';
-import '../../styles/components/admin.css';
+import '../../styles/admin/admin.css';
 
 const AdminLayout = ({ children, activeTab, onTabChange, toasts, onRemoveToast, showToast }) => {
   const { user } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true); // Always start with sidebar open
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setSidebarOpen(true); // Always keep sidebar open on desktop
+      } else {
+        setSidebarOpen(false); // Close on mobile
+      }
+    };
+
+    // Set initial state
+    handleResize();
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Debug: Log sidebar state
+  useEffect(() => {
+    console.log('Sidebar open state:', sidebarOpen);
+    console.log('Window width:', window.innerWidth);
+  }, [sidebarOpen]);
 
   // Check if user is admin
   if (!user?.is_admin) {
@@ -22,19 +45,25 @@ const AdminLayout = ({ children, activeTab, onTabChange, toasts, onRemoveToast, 
   }
 
   return (
-    <div className="admin-layout">
+    <div className="admin-layout" style={{ display: 'flex', position: 'relative', width: '100%', minHeight: '100vh', overflow: 'hidden' }}>
       <AdminToast toasts={toasts} onRemove={onRemoveToast} />
-      <AdminTopbar 
-        showToast={showToast} 
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-      />
+      
+      {/* Render sidebar first */}
       <AdminSidebar 
         activeTab={activeTab} 
         onTabChange={onTabChange}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
-      <div className="admin-main">
+      
+      {/* Then topbar */}
+      <AdminTopbar 
+        showToast={showToast} 
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+      />
+      
+      {/* Finally main content */}
+      <div className="admin-main" style={{ marginLeft: '320px', paddingTop: '80px', flex: 1, minHeight: '100vh' }}>
         {children}
       </div>
     </div>

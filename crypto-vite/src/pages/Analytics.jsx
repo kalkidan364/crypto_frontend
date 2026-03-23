@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MainPriceChart, RSIChart } from '../components/analytics/AnalyticsCharts';
-import '../styles/components/analytics.css';
+import '../styles/admin/analytics.css';
 
 const PAIRS = [
   { sym: 'BTC', name: 'Bitcoin', icon: '₿', bg: 'radial-gradient(circle,#ff9500,#f7931a)', price: 67842, chg: 1.86, rsi: 62.4, macd: 284, bb: 0.74, fg: 72, stoch: 81.2, adx: 38.4, sig: 'STRONG BUY', conf: 84, target: 72400, stop: 65200 },
@@ -55,7 +55,7 @@ const Analytics = () => {
   const buyPct = Math.round((buyCount / signals.length) * 100);
 
   return (
-    <main className="analytics-main">
+    <div className="analytics-page">
       {/* Page Header */}
       <div className="analytics-page-head">
         <div>
@@ -302,7 +302,7 @@ const Analytics = () => {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 };
 

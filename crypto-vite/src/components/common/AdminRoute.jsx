@@ -1,39 +1,27 @@
-import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const AdminRoute = ({ children }) => {
-  console.log('AdminRoute component rendering...');
-  
-  let authData;
-  try {
-    authData = useAuth();
-    console.log('AdminRoute - useAuth successful:', authData);
-  } catch (error) {
-    console.error('AdminRoute - useAuth failed:', error);
-    // If useAuth fails, redirect to login
-    return <Navigate to="/login" replace />;
-  }
+  const { isAuthenticated, isAdmin, loading, user } = useAuth();
 
-  // Add null check for authData
-  if (!authData) {
-    console.log('AdminRoute - authData is null, redirecting to login');
-    return <Navigate to="/login" replace />;
-  }
-
-  const { isAuthenticated, isAdmin, loading, user } = authData;
-
-  console.log('AdminRoute - isAuthenticated:', isAuthenticated);
-  console.log('AdminRoute - isAdmin:', isAdmin);
-  console.log('AdminRoute - loading:', loading);
-  console.log('AdminRoute - user:', user);
+  console.log('AdminRoute - Auth state:', {
+    isAuthenticated,
+    isAdmin,
+    loading,
+    user: user ? { 
+      id: user.id, 
+      email: user.email, 
+      is_admin: user.is_admin,
+      name: user.name 
+    } : null
+  });
 
   if (loading) {
     return (
       <div className="loading-screen">
         <div className="loading-spinner">
           <div className="spinner"></div>
-          <p>Loading...</p>
+          <p>Checking admin access...</p>
         </div>
       </div>
     );

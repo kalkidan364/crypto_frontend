@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
-import '../styles/components/withdrawal.css';
+import '../styles/pages/withdrawal.css';
 
 const Withdrawal = () => {
   const { user } = useAuth();
@@ -148,7 +148,7 @@ const Withdrawal = () => {
   };
 
   return (
-    <main className="main-content">
+    <>
       <div className="withdrawal-header">
         <div>
           <h1 className="page-title">Withdraw Funds</h1>
@@ -440,7 +440,7 @@ const Withdrawal = () => {
           </div>
         </div>
       )}
-    </main>
+    </>
   );
 };
 

@@ -1,0 +1,5797 @@
+/* Modern Exness-Style Trading Interface */
+
+
+
+/* Main Trade Container */
+
+.exness-trade-container {
+
+  width: 100%;
+
+  height: calc(100vh - 60px);
+
+  background: #0b0e11;
+
+  color: #ffffff;
+
+  display: flex;
+
+  flex-direction: row;
+
+  overflow: hidden;
+
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+
+}
+
+
+
+/* Left Trading Sidebar - Modern Exness Style */
+
+.exness-trading-sidebar {
+
+  width: 300px;
+
+  background: #161a1e;
+
+  border-right: 1px solid #1e2329;
+
+  display: flex;
+
+  flex-direction: column;
+
+  flex-shrink: 0;
+
+  overflow-y: auto;
+
+}
+
+
+
+/* Sidebar Header - Account Info */
+
+.exness-sidebar-header {
+
+  padding: 20px;
+
+  border-bottom: 1px solid #1e2329;
+
+  background: #161a1e;
+
+}
+
+
+
+.exness-account-info {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  margin-bottom: 20px;
+
+}
+
+
+
+.exness-account-avatar {
+
+  width: 44px;
+
+  height: 44px;
+
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+
+  border-radius: 50%;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-weight: 700;
+
+  font-size: 18px;
+
+  color: #ffffff;
+
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+
+}
+
+
+
+.exness-account-details h3 {
+
+  margin: 0;
+
+  font-size: 16px;
+
+  font-weight: 700;
+
+  color: #ffffff;
+
+  line-height: 1.2;
+
+}
+
+
+
+.exness-account-details p {
+
+  margin: 4px 0 0 0;
+
+  font-size: 13px;
+
+  color: #848e9c;
+
+  font-weight: 500;
+
+}
+
+
+
+/* Balance Info Cards */
+
+.exness-balance-info {
+
+  background: #0b0e11;
+
+  border-radius: 12px;
+
+  padding: 16px;
+
+  border: 1px solid #1e2329;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+}
+
+
+
+.exness-balance-row {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 12px;
+
+}
+
+
+
+.exness-balance-row:last-child {
+
+  margin-bottom: 0;
+
+}
+
+
+
+.exness-balance-label {
+
+  font-size: 13px;
+
+  color: #848e9c;
+
+  font-weight: 500;
+
+}
+
+
+
+.exness-balance-value {
+
+  font-size: 15px;
+
+  font-weight: 700;
+
+  color: #ffffff;
+
+}
+
+
+
+.exness-balance-value.positive {
+
+  color: #0ecb81;
+
+}
+
+
+
+.exness-balance-value.negative {
+
+  color: #f6465d;
+
+}
+
+
+
+/* Instruments Section */
+
+.exness-instruments-section {
+
+  flex: 1;
+
+  padding: 20px;
+
+  background: #161a1e;
+
+}
+
+
+
+.exness-section-title {
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  color: #ffffff;
+
+  margin-bottom: 16px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 1px;
+
+}
+
+
+
+.exness-search-box {
+
+  width: 100%;
+
+  background: #0b0e11;
+
+  border: 1px solid #1e2329;
+
+  border-radius: 8px;
+
+  padding: 12px 16px;
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  margin-bottom: 16px;
+
+  transition: all 0.2s ease;
+
+}
+
+
+
+.exness-search-box:focus {
+
+  outline: none;
+
+  border-color: #ff6b35;
+
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+
+}
+
+
+
+.exness-search-box::placeholder {
+
+  color: #848e9c;
+
+}
+
+
+
+/* Instrument Categories */
+
+.exness-categories {
+
+  display: flex;
+
+  gap: 8px;
+
+  margin-bottom: 20px;
+
+  flex-wrap: wrap;
+
+}
+
+
+
+.exness-category-btn {
+
+  background: transparent;
+
+  border: 1px solid #1e2329;
+
+  color: #848e9c;
+
+  padding: 8px 16px;
+
+  border-radius: 20px;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+
+}
+
+
+
+.exness-category-btn.active {
+
+  background: #ff6b35;
+
+  border-color: #ff6b35;
+
+  color: #ffffff;
+
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+
+}
+
+
+
+.exness-category-btn:hover:not(.active) {
+
+  border-color: #ff6b35;
+
+  color: #ff6b35;
+
+}
+
+
+
+/* Instruments List */
+
+.exness-instruments-list {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 4px;
+
+}
+
+
+
+.exness-instrument-item {
+
+  background: transparent;
+
+  border: none;
+
+  padding: 16px;
+
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  transition: all 0.15s ease;
+
+  text-align: left;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  border: 1px solid transparent;
+
+}
+
+
+
+.exness-instrument-item:hover {
+
+  background: #1e2329;
+
+  border-color: #1e2329;
+
+}
+
+
+
+.exness-instrument-item.active {
+
+  background: #ff6b35;
+
+  border-color: #ff6b35;
+
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+
+}
+
+
+
+.exness-instrument-info {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 4px;
+
+}
+
+
+
+.exness-instrument-symbol {
+
+  font-size: 15px;
+
+  font-weight: 700;
+
+  color: #ffffff;
+
+}
+
+
+
+.exness-instrument-name {
+
+  font-size: 12px;
+
+  color: #848e9c;
+
+  font-weight: 500;
+
+}
+
+
+
+.exness-instrument-price {
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: flex-end;
+
+  gap: 4px;
+
+}
+
+
+
+.exness-price-value {
+
+  font-size: 15px;
+
+  font-weight: 700;
+
+  color: #ffffff;
+
+}
+
+
+
+.exness-price-change {
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  padding: 2px 6px;
+
+  border-radius: 4px;
+
+}
+
+
+
+.exness-price-change.positive {
+
+  color: #0ecb81;
+
+  background: rgba(14, 203, 129, 0.1);
+
+}
+
+
+
+.exness-price-change.negative {
+
+  color: #f6465d;
+
+  background: rgba(246, 70, 93, 0.1);
+
+}
+
+
+
+/* Main Trading Area */
+
+.exness-main-area {
+
+  flex: 1;
+
+  display: flex;
+
+  flex-direction: column;
+
+  background: #0b0e11;
+
+  overflow: hidden;
+
+  min-height: 600px;
+
+}
+
+
+
+/* Top Trading Bar */
+
+.exness-top-bar {
+
+  background: #161a1e;
+
+  border-bottom: 1px solid #1e2329;
+
+  padding: 20px 24px;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+}
+
+
+
+.exness-selected-instrument {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 16px;
+
+}
+
+
+
+.exness-instrument-icon {
+
+  width: 40px;
+
+  height: 40px;
+
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+
+  border-radius: 50%;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-weight: 700;
+
+  font-size: 16px;
+
+  color: #ffffff;
+
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+
+}
+
+
+
+.exness-instrument-details {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 4px;
+
+}
+
+
+
+.exness-instrument-title {
+
+  font-size: 18px;
+
+  font-weight: 700;
+
+  color: #ffffff;
+
+}
+
+
+
+.exness-instrument-subtitle {
+
+  font-size: 13px;
+
+  color: #848e9c;
+
+  font-weight: 500;
+
+}
+
+
+
+.exness-price-display {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 20px;
+
+}
+
+
+
+.exness-current-price {
+
+  font-size: 32px;
+
+  font-weight: 800;
+
+  color: #ffffff;
+
+  font-family: 'Inter', monospace;
+
+}
+
+
+
+.exness-price-movement {
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: flex-end;
+
+  gap: 4px;
+
+}
+
+
+
+.exness-price-change-value {
+
+  font-size: 16px;
+
+  font-weight: 700;
+
+  padding: 4px 8px;
+
+  border-radius: 6px;
+
+}
+
+
+
+.exness-price-change-percent {
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+}
+
+
+
+/* Chart Area */
+
+.exness-chart-container {
+
+  flex: 1;
+
+  background: #0b0e11;
+
+  position: relative;
+
+  overflow: hidden;
+
+  margin: 16px 24px;
+
+  border-radius: 12px;
+
+  border: 2px solid #1e2329;
+
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+
+  min-height: 500px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  transition: all 0.2s ease;
+
+}
+
+
+
+.exness-chart-container:hover {
+
+  border-color: rgba(255, 107, 53, 0.3);
+
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+
+}
+
+
+
+.exness-chart-header {
+
+  background: #161a1e;
+
+  border-bottom: 1px solid #1e2329;
+
+  padding: 16px 20px;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+}
+
+
+
+.exness-timeframe-buttons {
+
+  display: flex;
+
+  gap: 8px;
+
+}
+
+
+
+.exness-timeframe-btn {
+
+  background: transparent;
+
+  border: 1px solid #1e2329;
+
+  color: #848e9c;
+
+  padding: 8px 16px;
+
+  border-radius: 20px;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+
+}
+
+
+
+.exness-timeframe-btn.active {
+
+  background: #ff6b35;
+
+  border-color: #ff6b35;
+
+  color: #ffffff;
+
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+
+}
+
+
+
+.exness-timeframe-btn:hover:not(.active) {
+
+  border-color: #ff6b35;
+
+  color: #ff6b35;
+
+}
+
+
+
+.exness-chart-tools {
+
+  display: flex;
+
+  gap: 8px;
+
+  align-items: center;
+
+}
+
+
+
+.exness-tool-btn {
+
+  width: 36px;
+
+  height: 36px;
+
+  background: transparent;
+
+  border: 1px solid #1e2329;
+
+  color: #848e9c;
+
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  transition: all 0.2s ease;
+
+  font-size: 14px;
+
+}
+
+
+
+.exness-tool-btn:hover {
+
+  border-color: #ff6b35;
+
+  color: #ff6b35;
+
+  background: rgba(255, 107, 53, 0.1);
+
+}
+
+
+
+.exness-chart-canvas {
+
+  flex: 1;
+
+  background: #0b0e11;
+
+  position: relative;
+
+  min-height: 400px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  transition: opacity 0.2s ease;
+
+  padding: 8px;
+
+}
+
+
+
+/* Trading Panel */
+
+.exness-trading-panel {
+
+  width: 320px;
+
+  background: #161a1e;
+
+  border-left: 1px solid #1e2329;
+
+  padding: 24px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  flex-shrink: 0;
+
+  overflow-y: auto;
+
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.3);
+
+}
+
+
+
+/* Trade Mode Selector */
+
+.exness-trade-mode-selector {
+
+  display: flex;
+
+  background: #0b0e11;
+
+  border-radius: 8px;
+
+  padding: 4px;
+
+  margin-bottom: 20px;
+
+  border: 1px solid #1e2329;
+
+}
+
+
+
+.exness-trade-mode-btn {
+
+  flex: 1;
+
+  background: transparent;
+
+  border: none;
+
+  padding: 12px 16px;
+
+  border-radius: 6px;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+  color: #848e9c;
+
+}
+
+
+
+.exness-trade-mode-btn.active.buy {
+
+  background: #0ecb81;
+
+  color: #ffffff;
+
+  box-shadow: 0 2px 8px rgba(14, 203, 129, 0.3);
+
+}
+
+
+
+.exness-trade-mode-btn.active.sell {
+
+  background: #f6465d;
+
+  color: #ffffff;
+
+  box-shadow: 0 2px 8px rgba(246, 70, 93, 0.3);
+
+}
+
+
+
+.exness-trade-mode-btn:hover:not(.active) {
+
+  background: #1e2329;
+
+  color: #ffffff;
+
+}
+
+
+
+/* Order Type Selector */
+
+.exness-order-type-selector {
+
+  display: flex;
+
+  background: #0b0e11;
+
+  border-radius: 8px;
+
+  padding: 4px;
+
+  margin-bottom: 20px;
+
+  border: 1px solid #1e2329;
+
+}
+
+
+
+.exness-order-type-btn {
+
+  flex: 1;
+
+  background: transparent;
+
+  border: none;
+
+  padding: 10px 16px;
+
+  border-radius: 6px;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+  color: #848e9c;
+
+}
+
+
+
+.exness-order-type-btn.active {
+
+  background: #ff6b35;
+
+  color: #ffffff;
+
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+
+}
+
+
+
+.exness-order-type-btn:hover:not(.active) {
+
+  background: #1e2329;
+
+  color: #ffffff;
+
+}
+
+
+
+/* Payment Currency Selector */
+
+.exness-payment-currency {
+
+  margin-bottom: 20px;
+
+}
+
+
+
+.exness-input-label {
+
+  display: block;
+
+  font-size: 12px;
+
+  color: #848e9c;
+
+  font-weight: 600;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+  margin-bottom: 8px;
+
+}
+
+
+
+.exness-select {
+
+  width: 100%;
+
+  background: #0b0e11;
+
+  border: 1px solid #1e2329;
+
+  border-radius: 8px;
+
+  padding: 12px 16px;
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+
+}
+
+
+
+.exness-select:focus {
+
+  outline: none;
+
+  border-color: #ff6b35;
+
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+
+}
+
+
+
+.exness-select option {
+
+  background: #161a1e;
+
+  color: #ffffff;
+
+  padding: 8px;
+
+}
+
+
+
+/* Input Groups */
+
+.exness-input-group {
+
+  margin-bottom: 20px;
+
+}
+
+
+
+.exness-input {
+
+  width: 100%;
+
+  background: #0b0e11;
+
+  border: 1px solid #1e2329;
+
+  border-radius: 8px;
+
+  padding: 12px 16px;
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  transition: all 0.2s ease;
+
+}
+
+
+
+.exness-input:focus {
+
+  outline: none;
+
+  border-color: #ff6b35;
+
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+
+}
+
+
+
+.exness-input::placeholder {
+
+  color: #848e9c;
+
+}
+
+
+
+.exness-balance-info-small {
+
+  font-size: 11px;
+
+  color: #848e9c;
+
+  margin-top: 6px;
+
+  font-weight: 500;
+
+}
+
+
+
+/* Order Summary */
+
+.exness-order-summary {
+
+  background: #0b0e11;
+
+  border-radius: 8px;
+
+  padding: 16px;
+
+  margin-bottom: 20px;
+
+  border: 1px solid #1e2329;
+
+}
+
+
+
+.exness-summary-row {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 8px;
+
+}
+
+
+
+.exness-summary-row:last-child {
+
+  margin-bottom: 0;
+
+  padding-top: 8px;
+
+  border-top: 1px solid #1e2329;
+
+  font-weight: 700;
+
+}
+
+
+
+.exness-summary-row span:first-child {
+
+  font-size: 13px;
+
+  color: #848e9c;
+
+  font-weight: 500;
+
+}
+
+
+
+.exness-summary-row span:last-child {
+
+  font-size: 13px;
+
+  color: #ffffff;
+
+  font-weight: 600;
+
+}
+
+
+
+.exness-summary-row .positive {
+
+  color: #0ecb81;
+
+}
+
+
+
+.exness-summary-row .negative {
+
+  color: #f6465d;
+
+}
+
+
+
+/* Place Order Button */
+
+.exness-place-order-btn {
+
+  width: 100%;
+
+  height: 48px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  font-size: 16px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+  margin-bottom: 20px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+}
+
+
+
+.exness-place-order-btn.buy {
+
+  background: linear-gradient(135deg, #0ecb81 0%, #00d4aa 100%);
+
+  color: #ffffff;
+
+  box-shadow: 0 4px 16px rgba(14, 203, 129, 0.3);
+
+}
+
+
+
+.exness-place-order-btn.buy:hover:not(:disabled) {
+
+  background: linear-gradient(135deg, #0bb574 0%, #00c199 100%);
+
+  transform: translateY(-1px);
+
+  box-shadow: 0 6px 20px rgba(14, 203, 129, 0.4);
+
+}
+
+
+
+.exness-place-order-btn.sell {
+
+  background: linear-gradient(135deg, #f6465d 0%, #ff4757 100%);
+
+  color: #ffffff;
+
+  box-shadow: 0 4px 16px rgba(246, 70, 93, 0.3);
+
+}
+
+
+
+.exness-place-order-btn.sell:hover:not(:disabled) {
+
+  background: linear-gradient(135deg, #e63946 0%, #f03e3e 100%);
+
+  transform: translateY(-1px);
+
+  box-shadow: 0 6px 20px rgba(246, 70, 93, 0.4);
+
+}
+
+
+
+.exness-place-order-btn:disabled {
+
+  background: #1e2329;
+
+  color: #848e9c;
+
+  cursor: not-allowed;
+
+  transform: none;
+
+  box-shadow: none;
+
+}
+
+
+
+.exness-place-order-btn.loading {
+
+  cursor: not-allowed;
+
+}
+
+
+
+.exness-loading-spinner-small {
+
+  width: 16px;
+
+  height: 16px;
+
+  border: 2px solid transparent;
+
+  border-top: 2px solid currentColor;
+
+  border-radius: 50%;
+
+  animation: exness-spin 1s linear infinite;
+
+}
+
+
+
+/* Wallet Balances */
+
+.exness-wallet-balances {
+
+  background: #0b0e11;
+
+  border-radius: 8px;
+
+  padding: 16px;
+
+  border: 1px solid #1e2329;
+
+}
+
+
+
+.exness-wallet-balances .exness-section-title {
+
+  margin-bottom: 12px;
+
+  font-size: 12px;
+
+}
+
+
+
+.exness-balance-item {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 8px;
+
+}
+
+
+
+.exness-balance-item:last-child {
+
+  margin-bottom: 0;
+
+}
+
+
+
+.exness-balance-currency {
+
+  font-size: 13px;
+
+  color: #848e9c;
+
+  font-weight: 600;
+
+}
+
+
+
+.exness-balance-amount {
+
+  font-size: 13px;
+
+  color: #ffffff;
+
+  font-weight: 700;
+
+}
+
+
+
+/* Chart Wrapper */
+
+.chart-wrapper {
+
+  width: 100%;
+
+  height: 100%;
+
+  min-height: 400px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  transition: opacity 0.2s ease;
+
+  background: #0b0e11;
+
+  border-radius: 8px;
+
+  overflow: hidden;
+
+}
+
+
+
+/* Chart Empty State */
+
+.chart-empty {
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  align-items: center;
+
+  height: 100%;
+
+  min-height: 400px;
+
+  color: #848e9c;
+
+  width: 100%;
+
+  background: #0b0e11;
+
+  border-radius: 8px;
+
+}
+
+
+
+.chart-empty .empty-icon {
+
+  font-size: 64px;
+
+  margin-bottom: 16px;
+
+  opacity: 0.3;
+
+}
+
+
+
+.chart-empty p {
+
+  font-size: 16px;
+
+  margin: 0;
+
+}
+
+
+
+/* Ensure chart is visible */
+
+.tradingview-chart {
+
+  width: 100%;
+
+  height: 100%;
+
+  min-height: 400px;
+
+  background: #0b0e11;
+
+  border-radius: 8px;
+
+  position: relative;
+
+  overflow: hidden;
+
+}
+
+
+
+.tradingview-chart svg {
+
+  width: 100%;
+
+  height: 100%;
+
+  min-height: 400px;
+
+  display: block;
+
+}
+
+
+
+/* Chart Loading State */
+
+.exness-chart-empty {
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  align-items: center;
+
+  height: 100%;
+
+  color: #848e9c;
+
+  min-height: 400px;
+
+  width: 100%;
+
+  background: #0b0e11;
+
+  border-radius: 8px;
+
+}
+
+
+
+.exness-chart-empty .exness-loading-spinner {
+
+  margin-bottom: 16px;
+
+}
+
+
+
+.exness-chart-empty span {
+
+  font-size: 14px;
+
+  font-weight: 500;
+
+}
+
+
+
+/* Chart Enhancements */
+
+.tradingview-chart .chart-crosshair {
+
+  pointer-events: none;
+
+  opacity: 0;
+
+  transition: opacity 0.2s ease;
+
+}
+
+
+
+.tradingview-chart:hover .chart-crosshair {
+
+  opacity: 1;
+
+}
+
+
+
+/* Price Line Styles */
+
+.price-line {
+
+  stroke-dasharray: 5,5;
+
+  animation: dash 1s linear infinite;
+
+}
+
+
+
+@keyframes dash {
+
+  to {
+
+    stroke-dashoffset: -10;
+
+  }
+
+}
+
+
+
+/* Volume Bar Hover Effects */
+
+.volume-bar {
+
+  transition: opacity 0.2s ease;
+
+}
+
+
+
+.volume-bar:hover {
+
+  opacity: 0.8;
+
+}
+
+
+
+/* Candlestick Hover Effects */
+
+.candlestick-group {
+
+  transition: opacity 0.2s ease;
+
+}
+
+
+
+.candlestick-group:hover {
+
+  opacity: 0.9;
+
+  filter: brightness(1.1);
+
+}
+
+
+
+/* Chart Tooltip */
+
+.chart-tooltip {
+
+  position: absolute;
+
+  background: rgba(22, 26, 30, 0.95);
+
+  border: 1px solid #1e2329;
+
+  border-radius: 6px;
+
+  padding: 8px 12px;
+
+  font-size: 12px;
+
+  color: #ffffff;
+
+  pointer-events: none;
+
+  z-index: 1000;
+
+  backdrop-filter: blur(10px);
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+}
+
+
+
+.chart-tooltip .tooltip-row {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  margin-bottom: 4px;
+
+  gap: 16px;
+
+}
+
+
+
+.chart-tooltip .tooltip-row:last-child {
+
+  margin-bottom: 0;
+
+}
+
+
+
+.chart-tooltip .tooltip-label {
+
+  color: #848e9c;
+
+  font-weight: 500;
+
+}
+
+
+
+.chart-tooltip .tooltip-value {
+
+  color: #ffffff;
+
+  font-weight: 600;
+
+}
+
+
+
+.chart-tooltip .tooltip-value.positive {
+
+  color: #0ecb81;
+
+}
+
+
+
+.chart-tooltip .tooltip-value.negative {
+
+  color: #f6465d;
+
+}
+
+
+
+/* Balance Display in Trading Panel */
+
+.exness-balance-display {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  background: #0b0e11;
+
+  border-radius: 12px;
+
+  padding: 16px;
+
+  margin-bottom: 20px;
+
+  border: 1px solid #1e2329;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  width: 100%;
+
+}
+
+
+
+.exness-balance-item {
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  flex: 1;
+
+}
+
+
+
+.exness-balance-item .balance-label {
+
+  font-size: 12px;
+
+  color: #848e9c;
+
+  margin-bottom: 6px;
+
+  font-weight: 600;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+}
+
+
+
+.exness-balance-item .balance-value {
+
+  font-size: 16px;
+
+  font-weight: 700;
+
+  color: #ffffff;
+
+}
+
+
+
+/* Trading Tip */
+
+.exness-trading-tip {
+
+  background: rgba(255, 107, 53, 0.1);
+
+  border: 1px solid rgba(255, 107, 53, 0.2);
+
+  border-radius: 12px;
+
+  padding: 16px;
+
+  margin-bottom: 20px;
+
+  font-size: 14px;
+
+  color: #ff6b35;
+
+  line-height: 1.5;
+
+  font-weight: 500;
+
+  width: 100%;
+
+  display: block;
+
+}
+
+
+
+/* Form Groups */
+
+.exness-form-group {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 8px;
+
+  min-width: 140px;
+
+}
+
+
+
+.exness-form-label {
+
+  font-size: 12px;
+
+  color: #848e9c;
+
+  font-weight: 600;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+}
+
+
+
+.exness-form-input {
+
+  background: #0b0e11;
+
+  border: 1px solid #1e2329;
+
+  border-radius: 8px;
+
+  padding: 12px 16px;
+
+  color: #ffffff;
+
+  font-size: 15px;
+
+  font-weight: 600;
+
+  transition: all 0.2s ease;
+
+}
+
+
+
+.exness-form-input:focus {
+
+  outline: none;
+
+  border-color: #ff6b35;
+
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+
+}
+
+
+
+.exness-form-select {
+
+  background: #0b0e11;
+
+  border: 1px solid #1e2329;
+
+  border-radius: 8px;
+
+  padding: 12px 16px;
+
+  color: #ffffff;
+
+  font-size: 15px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+
+}
+
+
+
+.exness-form-select:focus {
+
+  outline: none;
+
+  border-color: #ff6b35;
+
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+
+}
+
+
+
+.exness-form-select option {
+
+  background: #161a1e;
+
+  color: #ffffff;
+
+  padding: 8px;
+
+}
+
+
+
+/* Amount Controls */
+
+.exness-amount-controls {
+
+  display: flex;
+
+  align-items: center;
+
+  background: #0b0e11;
+
+  border: 1px solid #1e2329;
+
+  border-radius: 8px;
+
+  overflow: hidden;
+
+  transition: all 0.2s ease;
+
+}
+
+
+
+.exness-amount-controls:focus-within {
+
+  border-color: #ff6b35;
+
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+
+}
+
+
+
+.exness-amount-btn {
+
+  width: 40px;
+
+  height: 44px;
+
+  background: transparent;
+
+  border: none;
+
+  color: #848e9c;
+
+  cursor: pointer;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-size: 18px;
+
+  font-weight: 700;
+
+  transition: all 0.2s ease;
+
+}
+
+
+
+.exness-amount-btn:hover {
+
+  background: #1e2329;
+
+  color: #ffffff;
+
+}
+
+
+
+.exness-amount-input {
+
+  background: transparent;
+
+  border: none;
+
+  color: #ffffff;
+
+  font-size: 15px;
+
+  font-weight: 600;
+
+  text-align: center;
+
+  padding: 12px 16px;
+
+  min-width: 100px;
+
+  flex: 1;
+
+}
+
+
+
+.exness-amount-input:focus {
+
+  outline: none;
+
+}
+
+
+
+/* Trade Buttons */
+
+.exness-trade-buttons {
+
+  display: flex !important;
+
+  gap: 20px;
+
+  width: 100%;
+
+  justify-content: center;
+
+  margin-top: 30px;
+
+  padding: 20px;
+
+  background: rgba(255, 107, 53, 0.1);
+
+  border-radius: 12px;
+
+  border: 1px solid rgba(255, 107, 53, 0.3);
+
+  position: relative;
+
+  z-index: 1000;
+
+  min-height: 100px;
+
+  align-items: center;
+
+}
+
+
+
+.exness-trade-btn {
+
+  min-width: 150px !important;
+
+  height: 60px !important;
+
+  border: none !important;
+
+  border-radius: 8px !important;
+
+  font-size: 18px !important;
+
+  font-weight: 700 !important;
+
+  cursor: pointer !important;
+
+  transition: all 0.2s ease !important;
+
+  text-transform: uppercase !important;
+
+  letter-spacing: 0.5px !important;
+
+  position: relative !important;
+
+  overflow: hidden !important;
+
+  display: inline-block !important;
+
+  z-index: 1001 !important;
+
+  opacity: 1 !important;
+
+  visibility: visible !important;
+
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+
+  transform: none !important;
+
+}
+
+
+
+.exness-buy-btn {
+
+  background: linear-gradient(135deg, #0ecb81 0%, #00d4aa 100%) !important;
+
+  color: #ffffff !important;
+
+  box-shadow: 0 4px 16px rgba(14, 203, 129, 0.4) !important;
+
+}
+
+
+
+.exness-buy-btn:hover:not(:disabled) {
+
+  background: linear-gradient(135deg, #0bb574 0%, #00c199 100%) !important;
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 6px 20px rgba(14, 203, 129, 0.5) !important;
+
+}
+
+
+
+.exness-sell-btn {
+
+  background: linear-gradient(135deg, #f6465d 0%, #ff4757 100%) !important;
+
+  color: #ffffff !important;
+
+  box-shadow: 0 4px 16px rgba(246, 70, 93, 0.4) !important;
+
+}
+
+
+
+.exness-sell-btn:hover:not(:disabled) {
+
+  background: linear-gradient(135deg, #e63946 0%, #f03e3e 100%) !important;
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 6px 20px rgba(246, 70, 93, 0.5) !important;
+
+}
+
+
+
+.exness-trade-btn:disabled {
+
+  background: #1e2329 !important;
+
+  color: #848e9c !important;
+
+  cursor: not-allowed;
+
+  transform: none !important;
+
+  box-shadow: none !important;
+
+}
+
+
+
+/* Loading States */
+
+.exness-loading {
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  align-items: center;
+
+  height: 100%;
+
+  color: #848e9c;
+
+}
+
+
+
+.exness-loading-spinner {
+
+  width: 40px;
+
+  height: 40px;
+
+  border: 3px solid #1e2329;
+
+  border-top: 3px solid #ff6b35;
+
+  border-radius: 50%;
+
+  animation: exness-spin 1s linear infinite;
+
+  margin-bottom: 16px;
+
+}
+
+
+
+@keyframes exness-spin {
+
+  0% { transform: rotate(0deg); }
+
+  100% { transform: rotate(360deg); }
+
+}
+
+
+
+/* Chart Loading/Error States */
+
+.exness-chart-empty {
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  align-items: center;
+
+  height: 100%;
+
+  color: #848e9c;
+
+  min-height: 300px;
+
+  width: 100%;
+
+}
+
+
+
+.exness-chart-empty .empty-icon {
+
+  font-size: 64px;
+
+  margin-bottom: 16px;
+
+  opacity: 0.3;
+
+}
+
+
+
+.exness-chart-empty small {
+
+  margin-top: 8px;
+
+  opacity: 0.7;
+
+}
+
+
+
+/* Authentication Required */
+
+.exness-auth-required {
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  height: 100%;
+
+  width: 100%;
+
+}
+
+
+
+.exness-auth-content {
+
+  text-align: center;
+
+  background: #161a1e;
+
+  border: 1px solid #1e2329;
+
+  border-radius: 16px;
+
+  padding: 48px;
+
+  max-width: 420px;
+
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+}
+
+
+
+.exness-auth-icon {
+
+  font-size: 64px;
+
+  margin-bottom: 24px;
+
+  opacity: 0.7;
+
+}
+
+
+
+.exness-auth-content h2 {
+
+  font-size: 24px;
+
+  font-weight: 700;
+
+  color: #ffffff;
+
+  margin: 0 0 16px 0;
+
+}
+
+
+
+.exness-auth-content p {
+
+  font-size: 16px;
+
+  color: #848e9c;
+
+  margin: 0 0 32px 0;
+
+  line-height: 1.5;
+
+}
+
+
+
+.exness-auth-actions {
+
+  display: flex;
+
+  gap: 16px;
+
+  justify-content: center;
+
+}
+
+
+
+.exness-auth-btn {
+
+  padding: 12px 24px;
+
+  border-radius: 8px;
+
+  font-size: 15px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+
+  border: none;
+
+}
+
+
+
+.exness-auth-btn.primary {
+
+  background: #ff6b35;
+
+  color: #ffffff;
+
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+
+}
+
+
+
+.exness-auth-btn.primary:hover {
+
+  background: #e55a2b;
+
+  transform: translateY(-1px);
+
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+
+}
+
+
+
+.exness-auth-btn.secondary {
+
+  background: transparent;
+
+  color: #ff6b35;
+
+  border: 1px solid #ff6b35;
+
+}
+
+
+
+.exness-auth-btn.secondary:hover {
+
+  background: #ff6b35;
+
+  color: #ffffff;
+
+  transform: translateY(-1px);
+
+}
+
+
+
+/* Responsive Design */
+
+@media (max-width: 1400px) {
+
+  .exness-trading-sidebar {
+
+    width: 280px;
+
+  }
+
+  
+
+  .exness-trading-panel {
+
+    width: 300px;
+
+  }
+
+}
+
+
+
+@media (max-width: 1200px) {
+
+  .exness-trading-sidebar {
+
+    width: 260px;
+
+  }
+
+  
+
+  .exness-trading-panel {
+
+    width: 280px;
+
+  }
+
+}
+
+
+
+@media (max-width: 768px) {
+
+  .exness-trade-container {
+
+    flex-direction: column;
+
+    height: auto;
+
+    min-height: 100vh;
+
+  }
+
+  
+
+  .exness-trading-sidebar {
+
+    width: 100%;
+
+    height: auto;
+
+    max-height: 200px;
+
+    flex-direction: row;
+
+    overflow-x: auto;
+
+    border-right: none;
+
+    border-bottom: 1px solid #1e2329;
+
+  }
+
+  
+
+  .exness-sidebar-header {
+
+    min-width: 300px;
+
+    flex-shrink: 0;
+
+  }
+
+  
+
+  .exness-instruments-section {
+
+    min-width: 320px;
+
+    flex-shrink: 0;
+
+  }
+
+  
+
+  .exness-main-area {
+
+    flex: 1;
+
+    min-height: 500px;
+
+  }
+
+  
+
+  .exness-trading-panel {
+
+    width: 100%;
+
+    border-left: none;
+
+    border-top: 1px solid #1e2329;
+
+    max-height: 500px;
+
+  }
+
+  
+
+  .exness-top-bar {
+
+    flex-direction: column;
+
+    gap: 16px;
+
+    align-items: flex-start;
+
+  }
+
+  
+
+  .exness-chart-container {
+
+    margin: 12px 16px;
+
+    min-height: 400px;
+
+  }
+
+  
+
+  .chart-wrapper {
+
+    min-height: 350px;
+
+  }
+
+  
+
+  .tradingview-chart {
+
+    min-height: 350px;
+
+  }
+
+  
+
+  .tradingview-chart svg {
+
+    min-height: 350px;
+
+  }
+
+}
+
+
+
+@media (max-width: 480px) {
+
+  .exness-trading-sidebar {
+
+    height: auto;
+
+    max-height: 180px;
+
+  }
+
+  
+
+  .exness-sidebar-header {
+
+    min-width: 260px;
+
+    padding: 16px;
+
+  }
+
+  
+
+  .exness-instruments-section {
+
+    min-width: 280px;
+
+    padding: 16px;
+
+  }
+
+  
+
+  .exness-trading-panel {
+
+    padding: 16px;
+
+  }
+
+  
+
+  .exness-chart-container {
+
+    margin: 8px 12px;
+
+    min-height: 350px;
+
+  }
+
+  
+
+  .chart-wrapper {
+
+    min-height: 300px;
+
+  }
+
+  
+
+  .tradingview-chart {
+
+    min-height: 300px;
+
+  }
+
+  
+
+  .tradingview-chart svg {
+
+    min-height: 300px;
+
+  }
+
+  
+
+  .exness-current-price {
+
+    font-size: 24px;
+
+  }
+
+  
+
+  .exness-auth-content {
+
+    padding: 32px 24px;
+
+    margin: 16px;
+
+  }
+
+  
+
+  .exness-place-order-btn {
+
+    height: 44px;
+
+    font-size: 14px;
+
+  }
+
+  
+
+  .exness-timeframe-buttons {
+
+    flex-wrap: wrap;
+
+    gap: 6px;
+
+  }
+
+  
+
+  .exness-timeframe-btn {
+
+    padding: 6px 12px;
+
+    font-size: 12px;
+
+  }
+
+  
+
+  .exness-chart-tools {
+
+    gap: 6px;
+
+  }
+
+  
+
+  .exness-tool-btn {
+
+    width: 32px;
+
+    height: 32px;
+
+    font-size: 12px;
+
+  }
+
+}
+
+
+
+/* Custom Scrollbar */
+
+.exness-trading-sidebar::-webkit-scrollbar {
+
+  width: 4px;
+
+}
+
+
+
+.exness-trading-sidebar::-webkit-scrollbar-track {
+
+  background: #161a1e;
+
+}
+
+
+
+.exness-trading-sidebar::-webkit-scrollbar-thumb {
+
+  background: #1e2329;
+
+  border-radius: 2px;
+
+}
+
+
+
+.exness-trading-sidebar::-webkit-scrollbar-thumb:hover {
+
+  background: #ff6b35;
+
+}
+
+
+
+/* Smooth Animations */
+
+* {
+
+  box-sizing: border-box;
+
+}
+
+
+
+.exness-trade-container * {
+
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+
+}
+
+
+
+/* Loading Progress Animation */
+
+@keyframes pulse {
+
+  0% { opacity: 1; }
+
+  50% { opacity: 0.5; }
+
+  100% { opacity: 1; }
+
+}
+
+
+
+/* Focus States */
+
+.exness-form-input:focus,
+
+.exness-form-select:focus,
+
+.exness-search-box:focus {
+
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+
+}
+
+
+
+/* Hover Effects */
+
+.exness-instrument-item:hover .exness-instrument-symbol,
+
+.exness-instrument-item:hover .exness-price-value {
+
+  color: #ff6b35;
+
+}
+
+
+
+.exness-instrument-item.active .exness-instrument-symbol,
+
+.exness-instrument-item.active .exness-instrument-name,
+
+.exness-instrument-item.active .exness-price-value,
+
+.exness-instrument-item.active .exness-price-change {
+
+  color: #ffffff !important;
+
+  background: transparent !important;
+
+}
+
+/* Trading Panel Scrollbar */
+
+.exness-trading-panel::-webkit-scrollbar {
+
+  width: 4px;
+
+}
+
+
+
+.exness-trading-panel::-webkit-scrollbar-track {
+
+  background: #161a1e;
+
+}
+
+
+
+.exness-trading-panel::-webkit-scrollbar-thumb {
+
+  background: #1e2329;
+
+  border-radius: 2px;
+
+}
+
+
+
+.exness-trading-panel::-webkit-scrollbar-thumb:hover {
+
+  background: #ff6b35;
+
+}
+
+
+
+/* Additional Trading Panel Enhancements */
+
+.exness-trading-panel .exness-section-title {
+
+  border-bottom: 1px solid #1e2329;
+
+  padding-bottom: 8px;
+
+  margin-bottom: 16px;
+
+}
+
+
+
+/* Focus ring improvements */
+
+.exness-input:focus,
+
+.exness-select:focus {
+
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.15);
+
+}
+
+
+
+/* Hover states for interactive elements */
+
+.exness-trade-mode-btn:hover:not(.active),
+
+.exness-order-type-btn:hover:not(.active) {
+
+  background: rgba(255, 107, 53, 0.1);
+
+  color: #ff6b35;
+
+}
+
+
+
+/* Loading state for place order button */
+
+.exness-place-order-btn.loading .exness-loading-spinner-small {
+
+  margin-right: 8px;
+
+}
+
+
+
+/* Enhanced balance display */
+
+.exness-wallet-balances .exness-balance-item:hover {
+
+  background: rgba(255, 107, 53, 0.05);
+
+  border-radius: 4px;
+
+  padding: 4px 8px;
+
+  margin: -4px -8px 4px -8px;
+
+  transition: all 0.2s ease;
+
+}
+
+
+
+/* Order summary enhancements */
+
+.exness-order-summary:hover {
+
+  border-color: rgba(255, 107, 53, 0.3);
+
+  transition: border-color 0.2s ease;
+
+}
+
+
+
+/* Payment currency selector enhancements */
+
+.exness-payment-currency .exness-select:hover {
+
+  border-color: rgba(255, 107, 53, 0.5);
+
+}
+
+/* Chart Performance Optimizations */
+
+.tradingview-chart svg * {
+
+  vector-effect: non-scaling-stroke;
+
+}
+
+
+
+/* Chart Grid Enhancements */
+
+.chart-grid-line {
+
+  stroke: #1e2329;
+
+  stroke-width: 0.5;
+
+  opacity: 0.3;
+
+}
+
+
+
+.chart-price-line {
+
+  stroke: #1e2329;
+
+  stroke-width: 1;
+
+  opacity: 0.5;
+
+}
+
+
+
+/* Candlestick Enhancements */
+
+.candlestick-bullish {
+
+  fill: #0ecb81;
+
+  stroke: #0ecb81;
+
+}
+
+
+
+.candlestick-bearish {
+
+  fill: #f6465d;
+
+  stroke: #f6465d;
+
+}
+
+
+
+.candlestick-wick {
+
+  stroke-width: 1;
+
+  opacity: 0.8;
+
+}
+
+
+
+/* Volume Bar Enhancements */
+
+.volume-bar-bullish {
+
+  fill: #0ecb81;
+
+  opacity: 0.4;
+
+}
+
+
+
+.volume-bar-bearish {
+
+  fill: #f6465d;
+
+  opacity: 0.4;
+
+}
+
+
+
+/* Chart Text Styling */
+
+.chart-text {
+
+  font-family: 'Inter', monospace;
+
+  font-size: 11px;
+
+  fill: #848e9c;
+
+}
+
+
+
+.chart-title {
+
+  font-family: 'Inter', sans-serif;
+
+  font-size: 16px;
+
+  font-weight: 700;
+
+  fill: #ffffff;
+
+}
+
+
+
+.chart-price-label {
+
+  font-family: 'Inter', monospace;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  fill: #ffffff;
+
+}
+
+
+
+/* Current Price Indicator */
+
+.current-price-line {
+
+  stroke: #ff6b35;
+
+  stroke-width: 1;
+
+  stroke-dasharray: 5,5;
+
+  opacity: 0.8;
+
+  animation: dash 2s linear infinite;
+
+}
+
+
+
+.current-price-label {
+
+  fill: #ffffff;
+
+  font-family: 'Inter', monospace;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+}
+
+
+
+.current-price-bg {
+
+  fill: #ff6b35;
+
+  rx: 3;
+
+}
+
+
+
+/* Chart Loading Animation */
+
+@keyframes chartPulse {
+
+  0%, 100% { opacity: 0.3; }
+
+  50% { opacity: 0.7; }
+
+}
+
+
+
+.chart-loading-element {
+
+  animation: chartPulse 2s ease-in-out infinite;
+
+}
+
+
+
+/* Chart Interaction States */
+
+.chart-interactive:hover {
+
+  cursor: crosshair;
+
+}
+
+
+
+/* Enhanced Chart Container */
+
+.exness-chart-container.fullscreen {
+
+  position: fixed;
+
+  top: 0;
+
+  left: 0;
+
+  right: 0;
+
+  bottom: 0;
+
+  z-index: 9999;
+
+  margin: 0;
+
+  border-radius: 0;
+
+  min-height: 100vh;
+
+}
+
+
+
+/* Chart Fullscreen Button */
+
+.chart-fullscreen-btn {
+
+  position: absolute;
+
+  top: 16px;
+
+  right: 16px;
+
+  width: 32px;
+
+  height: 32px;
+
+  background: rgba(22, 26, 30, 0.8);
+
+  border: 1px solid #1e2329;
+
+  border-radius: 6px;
+
+  color: #848e9c;
+
+  cursor: pointer;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-size: 14px;
+
+  transition: all 0.2s ease;
+
+  backdrop-filter: blur(10px);
+
+}
+
+
+
+.chart-fullscreen-btn:hover {
+
+  background: rgba(255, 107, 53, 0.1);
+
+  border-color: #ff6b35;
+
+  color: #ff6b35;
+
+}
+
+
+
+/* Chart Data Quality Indicator */
+
+.chart-data-quality {
+
+  position: absolute;
+
+  bottom: 16px;
+
+  left: 16px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  background: rgba(22, 26, 30, 0.8);
+
+  border: 1px solid #1e2329;
+
+  border-radius: 6px;
+
+  padding: 6px 12px;
+
+  font-size: 11px;
+
+  color: #848e9c;
+
+  backdrop-filter: blur(10px);
+
+}
+
+
+
+.chart-data-quality .quality-dot {
+
+  width: 6px;
+
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: #0ecb81;
+
+}
+
+
+
+.chart-data-quality .quality-dot.demo {
+
+  background: #ff6b35;
+
+}
+
+
+
+.chart-data-quality .quality-dot.error {
+
+  background: #f6465d;
+
+}
+
+
+
+/* Smooth Transitions */
+
+.exness-chart-container,
+
+.chart-wrapper,
+
+.tradingview-chart {
+
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+}
+
+
+
+/* High DPI Display Support */
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+
+  .tradingview-chart svg {
+
+    shape-rendering: geometricPrecision;
+
+  }
+
+}
+
+/* Bottom Trading Sections */
+
+.exness-bottom-sections {
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr 1fr;
+
+  gap: 16px;
+
+  padding: 16px 24px;
+
+  background: #0b0e11;
+
+  border-top: 1px solid #1e2329;
+
+  min-height: 400px;
+
+}
+
+
+
+/* Section Headers */
+
+.exness-section-header {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  padding: 16px 20px;
+
+  background: #161a1e;
+
+  border-bottom: 1px solid #1e2329;
+
+  border-radius: 8px 8px 0 0;
+
+}
+
+
+
+.exness-section-title {
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  color: #ffffff;
+
+  margin: 0;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+}
+
+
+
+.exness-section-controls {
+
+  display: flex;
+
+  gap: 8px;
+
+}
+
+
+
+.exness-control-btn {
+
+  background: transparent;
+
+  border: 1px solid #1e2329;
+
+  color: #848e9c;
+
+  padding: 6px 12px;
+
+  border-radius: 4px;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+
+}
+
+
+
+.exness-control-btn.active {
+
+  background: #ff6b35;
+
+  border-color: #ff6b35;
+
+  color: #ffffff;
+
+}
+
+
+
+.exness-control-btn:hover:not(.active) {
+
+  border-color: #ff6b35;
+
+  color: #ff6b35;
+
+}
+
+
+
+/* Order Book Section */
+
+.exness-order-book-section {
+
+  background: #161a1e;
+
+  border-radius: 8px;
+
+  border: 1px solid #1e2329;
+
+  overflow: hidden;
+
+}
+
+
+
+.exness-order-book {
+
+  height: 350px;
+
+  overflow-y: auto;
+
+}
+
+
+
+.exness-order-book-header {
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr 1fr;
+
+  gap: 8px;
+
+  padding: 12px 20px;
+
+  background: #0b0e11;
+
+  border-bottom: 1px solid #1e2329;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  color: #848e9c;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+}
+
+
+
+.exness-order-row {
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr 1fr;
+
+  gap: 8px;
+
+  padding: 8px 20px;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  transition: background-color 0.2s ease;
+
+  cursor: pointer;
+
+}
+
+
+
+.exness-order-row:hover {
+
+  background: rgba(255, 107, 53, 0.05);
+
+}
+
+
+
+.exness-order-row.sell {
+
+  background: linear-gradient(90deg, transparent 0%, rgba(246, 70, 93, 0.1) 100%);
+
+}
+
+
+
+.exness-order-row.buy {
+
+  background: linear-gradient(90deg, transparent 0%, rgba(14, 203, 129, 0.1) 100%);
+
+}
+
+
+
+.exness-order-row.sell .order-price {
+
+  color: #f6465d;
+
+}
+
+
+
+.exness-order-row.buy .order-price {
+
+  color: #0ecb81;
+
+}
+
+
+
+.exness-order-row .order-amount,
+
+.exness-order-row .order-total {
+
+  color: #ffffff;
+
+}
+
+
+
+.exness-current-price-row {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  padding: 12px 20px;
+
+  background: rgba(255, 107, 53, 0.1);
+
+  border: 1px solid rgba(255, 107, 53, 0.2);
+
+  margin: 8px 0;
+
+}
+
+
+
+.current-price-label {
+
+  font-size: 16px;
+
+  font-weight: 700;
+
+  color: #ffffff;
+
+}
+
+
+
+.current-price-row .price-change {
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+}
+
+
+
+/* Recent Trades Section */
+
+.exness-recent-trades-section {
+
+  background: #161a1e;
+
+  border-radius: 8px;
+
+  border: 1px solid #1e2329;
+
+  overflow: hidden;
+
+}
+
+
+
+.exness-recent-trades {
+
+  height: 350px;
+
+  overflow-y: auto;
+
+}
+
+
+
+.exness-trades-header {
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr 1fr 80px;
+
+  gap: 8px;
+
+  padding: 12px 20px;
+
+  background: #0b0e11;
+
+  border-bottom: 1px solid #1e2329;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  color: #848e9c;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+}
+
+
+
+.exness-trades-list {
+
+  max-height: 300px;
+
+  overflow-y: auto;
+
+}
+
+
+
+.exness-trade-row {
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr 1fr 80px;
+
+  gap: 8px;
+
+  padding: 8px 20px;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  transition: background-color 0.2s ease;
+
+  cursor: pointer;
+
+}
+
+
+
+.exness-trade-row:hover {
+
+  background: rgba(255, 107, 53, 0.05);
+
+}
+
+
+
+.exness-trade-row .trade-time {
+
+  color: #848e9c;
+
+  font-family: monospace;
+
+}
+
+
+
+.exness-trade-row.buy .trade-price {
+
+  color: #0ecb81;
+
+}
+
+
+
+.exness-trade-row.sell .trade-price {
+
+  color: #f6465d;
+
+}
+
+
+
+.exness-trade-row .trade-amount {
+
+  color: #ffffff;
+
+}
+
+
+
+.exness-trade-row .trade-side {
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  text-align: center;
+
+  padding: 2px 6px;
+
+  border-radius: 3px;
+
+}
+
+
+
+.exness-trade-row .trade-side.buy {
+
+  background: rgba(14, 203, 129, 0.2);
+
+  color: #0ecb81;
+
+}
+
+
+
+.exness-trade-row .trade-side.sell {
+
+  background: rgba(246, 70, 93, 0.2);
+
+  color: #f6465d;
+
+}
+
+
+
+/* Market Statistics Section */
+
+.exness-market-stats-section {
+
+  background: #161a1e;
+
+  border-radius: 8px;
+
+  border: 1px solid #1e2329;
+
+  overflow: hidden;
+
+}
+
+
+
+.exness-market-stats {
+
+  padding: 20px;
+
+  height: 350px;
+
+  overflow-y: auto;
+
+}
+
+
+
+.exness-stats-grid {
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 16px;
+
+  margin-bottom: 20px;
+
+}
+
+
+
+.exness-stat-item {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 6px;
+
+  padding: 12px;
+
+  background: #0b0e11;
+
+  border-radius: 6px;
+
+  border: 1px solid #1e2329;
+
+  transition: all 0.2s ease;
+
+}
+
+
+
+.exness-stat-item:hover {
+
+  border-color: rgba(255, 107, 53, 0.3);
+
+  background: rgba(255, 107, 53, 0.05);
+
+}
+
+
+
+.exness-stat-item .stat-label {
+
+  font-size: 12px;
+
+  color: #848e9c;
+
+  font-weight: 500;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+}
+
+
+
+.exness-stat-item .stat-value {
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  color: #ffffff;
+
+}
+
+
+
+.exness-stat-item .stat-value.positive {
+
+  color: #0ecb81;
+
+}
+
+
+
+.exness-stat-item .stat-value.negative {
+
+  color: #f6465d;
+
+}
+
+
+
+/* Mini Chart */
+
+.exness-mini-chart {
+
+  background: #0b0e11;
+
+  border-radius: 6px;
+
+  border: 1px solid #1e2329;
+
+  padding: 12px;
+
+}
+
+
+
+.mini-chart-header {
+
+  margin-bottom: 12px;
+
+}
+
+
+
+.mini-chart-header span {
+
+  font-size: 12px;
+
+  color: #848e9c;
+
+  font-weight: 600;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+}
+
+
+
+.mini-chart-line {
+
+  height: 60px;
+
+  border-radius: 4px;
+
+  overflow: hidden;
+
+}
+
+
+
+/* Scrollbar Styles for Bottom Sections */
+
+.exness-order-book::-webkit-scrollbar,
+
+.exness-recent-trades::-webkit-scrollbar,
+
+.exness-market-stats::-webkit-scrollbar,
+
+.exness-trades-list::-webkit-scrollbar {
+
+  width: 4px;
+
+}
+
+
+
+.exness-order-book::-webkit-scrollbar-track,
+
+.exness-recent-trades::-webkit-scrollbar-track,
+
+.exness-market-stats::-webkit-scrollbar-track,
+
+.exness-trades-list::-webkit-scrollbar-track {
+
+  background: #161a1e;
+
+}
+
+
+
+.exness-order-book::-webkit-scrollbar-thumb,
+
+.exness-recent-trades::-webkit-scrollbar-thumb,
+
+.exness-market-stats::-webkit-scrollbar-thumb,
+
+.exness-trades-list::-webkit-scrollbar-thumb {
+
+  background: #1e2329;
+
+  border-radius: 2px;
+
+}
+
+
+
+.exness-order-book::-webkit-scrollbar-thumb:hover,
+
+.exness-recent-trades::-webkit-scrollbar-thumb:hover,
+
+.exness-market-stats::-webkit-scrollbar-thumb:hover,
+
+.exness-trades-list::-webkit-scrollbar-thumb:hover {
+
+  background: #ff6b35;
+
+}
+
+
+
+/* Responsive Design for Bottom Sections */
+
+@media (max-width: 1200px) {
+
+  .exness-bottom-sections {
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 12px;
+
+  }
+
+  
+
+  .exness-market-stats-section {
+
+    grid-column: 1 / -1;
+
+  }
+
+  
+
+  .exness-stats-grid {
+
+    grid-template-columns: repeat(3, 1fr);
+
+  }
+
+}
+
+
+
+@media (max-width: 768px) {
+
+  .exness-bottom-sections {
+
+    grid-template-columns: 1fr;
+
+    gap: 12px;
+
+    padding: 12px 16px;
+
+    min-height: auto;
+
+  }
+
+  
+
+  .exness-order-book,
+
+  .exness-recent-trades,
+
+  .exness-market-stats {
+
+    height: 250px;
+
+  }
+
+  
+
+  .exness-stats-grid {
+
+    grid-template-columns: 1fr 1fr;
+
+  }
+
+  
+
+  .exness-section-header {
+
+    padding: 12px 16px;
+
+  }
+
+  
+
+  .exness-order-book-header,
+
+  .exness-trades-header {
+
+    padding: 8px 16px;
+
+    font-size: 11px;
+
+  }
+
+  
+
+  .exness-order-row,
+
+  .exness-trade-row {
+
+    padding: 6px 16px;
+
+    font-size: 12px;
+
+  }
+
+}
+
+
+
+@media (max-width: 480px) {
+
+  .exness-bottom-sections {
+
+    padding: 8px 12px;
+
+  }
+
+  
+
+  .exness-order-book,
+
+  .exness-recent-trades,
+
+  .exness-market-stats {
+
+    height: 200px;
+
+  }
+
+  
+
+  .exness-stats-grid {
+
+    grid-template-columns: 1fr;
+
+    gap: 12px;
+
+  }
+
+  
+
+  .exness-section-controls {
+
+    gap: 4px;
+
+  }
+
+  
+
+  .exness-control-btn {
+
+    padding: 4px 8px;
+
+    font-size: 11px;
+
+  }
+
+  
+
+  .exness-order-book-header,
+
+  .exness-trades-header {
+
+    font-size: 10px;
+
+    padding: 6px 12px;
+
+  }
+
+  
+
+  .exness-order-row,
+
+  .exness-trade-row {
+
+    font-size: 11px;
+
+    padding: 4px 12px;
+
+  }
+
+}
+
+
+
+/* Modern Trading Interface Styles */
+
+
+
+/* Modern Top Bar */
+
+.exness-top-bar .exness-instrument-icon.modern {
+
+  position: relative;
+
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #ff6b35 100%);
+
+  animation: iconPulse 3s ease-in-out infinite;
+
+}
+
+
+
+.exness-instrument-icon.modern .crypto-icon {
+
+  font-size: 18px;
+
+  font-weight: 800;
+
+  z-index: 2;
+
+  position: relative;
+
+}
+
+
+
+.exness-instrument-icon.modern .icon-glow {
+
+  position: absolute;
+
+  top: -2px;
+
+  left: -2px;
+
+  right: -2px;
+
+  bottom: -2px;
+
+  background: radial-gradient(circle, rgba(255, 107, 53, 0.4) 0%, transparent 70%);
+
+  border-radius: 50%;
+
+  animation: glowPulse 2s ease-in-out infinite;
+
+}
+
+
+
+@keyframes iconPulse {
+
+  0%, 100% { transform: scale(1); }
+
+  50% { transform: scale(1.05); }
+
+}
+
+
+
+@keyframes glowPulse {
+
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+
+  50% { opacity: 1; transform: scale(1.1); }
+
+}
+
+
+
+/* Instrument Badges */
+
+.instrument-badges {
+
+  display: flex;
+
+  gap: 6px;
+
+  margin-top: 4px;
+
+}
+
+
+
+.instrument-badges .badge {
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  padding: 2px 6px;
+
+  border-radius: 10px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+}
+
+
+
+.instrument-badges .badge.hot {
+
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+
+  color: #ffffff;
+
+  animation: badgePulse 2s ease-in-out infinite;
+
+}
+
+
+
+.instrument-badges .badge.volume {
+
+  background: rgba(14, 203, 129, 0.2);
+
+  color: #0ecb81;
+
+  border: 1px solid rgba(14, 203, 129, 0.3);
+
+}
+
+
+
+.instrument-badges .badge.category {
+
+  background: rgba(107, 114, 128, 0.2);
+
+  color: #9ca3af;
+
+  border: 1px solid rgba(107, 114, 128, 0.3);
+
+}
+
+
+
+@keyframes badgePulse {
+
+  0%, 100% { transform: scale(1); }
+
+  50% { transform: scale(1.05); }
+
+}
+
+
+
+/* Modern Price Display */
+
+.exness-price-display.modern {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 12px;
+
+}
+
+
+
+.price-main {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 8px;
+
+}
+
+
+
+.price-change-indicator {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+}
+
+
+
+.price-stats {
+
+  display: flex;
+
+  gap: 20px;
+
+}
+
+
+
+.price-stats .stat-item {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 4px;
+
+  padding: 8px 12px;
+
+  background: rgba(255, 107, 53, 0.1);
+
+  border: 1px solid rgba(255, 107, 53, 0.2);
+
+  border-radius: 6px;
+
+}
+
+
+
+.price-stats .stat-label {
+
+  font-size: 11px;
+
+  color: #848e9c;
+
+  font-weight: 600;
+
+  text-transform: uppercase;
+
+}
+
+
+
+.price-stats .stat-value {
+
+  font-size: 13px;
+
+  color: #ffffff;
+
+  font-weight: 700;
+
+}
+
+
+
+/* Modern Chart Container */
+
+.exness-chart-container.modern {
+
+  background: linear-gradient(145deg, #0b0e11 0%, #161a1e 100%);
+
+  border: 1px solid #1e2329;
+
+  box-shadow: 
+
+    0 4px 16px rgba(0, 0, 0, 0.3),
+
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+}
+
+
+
+.exness-chart-container.modern:hover {
+
+  border-color: rgba(255, 107, 53, 0.4);
+
+  box-shadow: 
+
+    0 6px 24px rgba(0, 0, 0, 0.4),
+
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+
+    0 0 0 1px rgba(255, 107, 53, 0.1);
+
+}
+
+
+
+.chart-header-left {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 20px;
+
+  flex: 1;
+
+}
+
+
+
+.chart-title h4 {
+
+  font-size: 16px;
+
+  font-weight: 700;
+
+  color: #ffffff;
+
+  margin: 0;
+
+}
+
+
+
+.chart-subtitle {
+
+  font-size: 12px;
+
+  color: #848e9c;
+
+  font-weight: 500;
+
+}
+
+
+
+.exness-timeframe-buttons.modern {
+
+  display: flex;
+
+  gap: 4px;
+
+  background: rgba(11, 14, 17, 0.6);
+
+  padding: 4px;
+
+  border-radius: 8px;
+
+  border: 1px solid #1e2329;
+
+}
+
+
+
+.exness-timeframe-buttons.modern .exness-timeframe-btn {
+
+  padding: 8px 14px;
+
+  font-size: 12px;
+
+  border-radius: 6px;
+
+  border: none;
+
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+}
+
+
+
+.exness-timeframe-buttons.modern .exness-timeframe-btn.active {
+
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+
+  color: #ffffff;
+
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+
+  transform: translateY(-1px);
+
+}
+
+
+
+.exness-chart-tools.modern {
+
+  display: flex;
+
+  gap: 12px;
+
+}
+
+
+
+.tool-group {
+
+  display: flex;
+
+  gap: 4px;
+
+  background: rgba(11, 14, 17, 0.6);
+
+  padding: 4px;
+
+  border-radius: 8px;
+
+  border: 1px solid #1e2329;
+
+}
+
+
+
+.exness-chart-tools.modern .exness-tool-btn {
+
+  width: 32px;
+
+  height: 32px;
+
+  border-radius: 6px;
+
+  border: none;
+
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+}
+
+
+
+.exness-chart-tools.modern .exness-tool-btn:hover {
+
+  background: rgba(255, 107, 53, 0.15);
+
+  color: #ff6b35;
+
+  transform: translateY(-1px);
+
+}
+
+
+
+.exness-chart-canvas.modern {
+
+  background: linear-gradient(145deg, #0b0e11 0%, #0d1115 100%);
+
+  border-radius: 8px;
+
+  position: relative;
+
+  overflow: hidden;
+
+}
+
+
+
+.chart-wrapper.modern {
+
+  background: transparent;
+
+  border-radius: 8px;
+
+}
+
+
+
+/* Modern Chart Loading */
+
+.exness-chart-empty.modern {
+
+  background: linear-gradient(145deg, #0b0e11 0%, #161a1e 100%);
+
+  border-radius: 8px;
+
+}
+
+
+
+.loading-animation {
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 16px;
+
+  margin-bottom: 20px;
+
+}
+
+
+
+.loading-dots {
+
+  display: flex;
+
+  gap: 8px;
+
+}
+
+
+
+.loading-dots span {
+
+  width: 8px;
+
+  height: 8px;
+
+  background: #ff6b35;
+
+  border-radius: 50%;
+
+  animation: loadingDot 1.4s ease-in-out infinite;
+
+}
+
+
+
+.loading-dots span:nth-child(2) {
+
+  animation-delay: 0.2s;
+
+}
+
+
+
+.loading-dots span:nth-child(3) {
+
+  animation-delay: 0.4s;
+
+}
+
+
+
+@keyframes loadingDot {
+
+  0%, 80%, 100% { 
+
+    transform: scale(0.8);
+
+    opacity: 0.5;
+
+  }
+
+  40% { 
+
+    transform: scale(1.2);
+
+    opacity: 1;
+
+  }
+
+}
+
+
+
+/* Modern Trading Panel */
+
+.exness-trading-panel.modern {
+
+  background: linear-gradient(145deg, #161a1e 0%, #1e2329 100%);
+
+  border-left: 1px solid #1e2329;
+
+  box-shadow: 
+
+    -4px 0 16px rgba(0, 0, 0, 0.3),
+
+    inset 1px 0 0 rgba(255, 255, 255, 0.05);
+
+}
+
+
+
+.exness-trade-mode-selector.modern {
+
+  background: rgba(11, 14, 17, 0.6);
+
+  border-radius: 12px;
+
+  padding: 6px;
+
+  border: 1px solid #1e2329;
+
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+
+}
+
+
+
+.exness-trade-mode-selector.modern .exness-trade-mode-btn {
+
+  border-radius: 8px;
+
+  border: none;
+
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  position: relative;
+
+  overflow: hidden;
+
+}
+
+
+
+.exness-trade-mode-selector.modern .exness-trade-mode-btn .btn-content {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  z-index: 2;
+
+  position: relative;
+
+}
+
+
+
+.exness-trade-mode-selector.modern .exness-trade-mode-btn.active::before {
+
+  content: '';
+
+  position: absolute;
+
+  top: 0;
+
+  left: 0;
+
+  right: 0;
+
+  bottom: 0;
+
+  background: linear-gradient(135deg, currentColor 0%, currentColor 100%);
+
+  opacity: 0.1;
+
+  z-index: 1;
+
+}
+
+
+
+.exness-trade-mode-selector.modern .exness-trade-mode-btn.active.buy {
+
+  background: linear-gradient(135deg, #0ecb81 0%, #00d4aa 100%);
+
+  color: #ffffff;
+
+  box-shadow: 0 4px 12px rgba(14, 203, 129, 0.4);
+
+  transform: translateY(-1px);
+
+}
+
+
+
+.exness-trade-mode-selector.modern .exness-trade-mode-btn.active.sell {
+
+  background: linear-gradient(135deg, #f6465d 0%, #ff4757 100%);
+
+  color: #ffffff;
+
+  box-shadow: 0 4px 12px rgba(246, 70, 93, 0.4);
+
+  transform: translateY(-1px);
+
+}
+
+
+
+.exness-order-type-selector.modern {
+
+  background: rgba(11, 14, 17, 0.6);
+
+  border-radius: 10px;
+
+  padding: 4px;
+
+  border: 1px solid #1e2329;
+
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+
+}
+
+
+
+.exness-order-type-selector.modern .exness-order-type-btn {
+
+  border-radius: 6px;
+
+  border: none;
+
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+}
+
+
+
+.exness-order-type-selector.modern .exness-order-type-btn.active {
+
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+
+  color: #ffffff;
+
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+
+  transform: translateY(-1px);
+
+}
+
+
+
+/* Modern Input Groups */
+
+.exness-input-group.modern {
+
+  position: relative;
+
+}
+
+
+
+.input-with-controls {
+
+  position: relative;
+
+}
+
+
+
+.exness-input.modern {
+
+  background: linear-gradient(145deg, #0b0e11 0%, #0d1115 100%);
+
+  border: 1px solid #1e2329;
+
+  border-radius: 10px;
+
+  padding: 14px 16px;
+
+  font-size: 15px;
+
+  font-weight: 600;
+
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+
+}
+
+
+
+.exness-input.modern:focus {
+
+  border-color: #ff6b35;
+
+  box-shadow: 
+
+    0 0 0 2px rgba(255, 107, 53, 0.1),
+
+    inset 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  background: linear-gradient(145deg, #0d1115 0%, #0f1419 100%);
+
+}
+
+
+
+.amount-quick-select {
+
+  display: flex;
+
+  gap: 6px;
+
+  margin-top: 8px;
+
+}
+
+
+
+.amount-quick-select button {
+
+  flex: 1;
+
+  background: rgba(255, 107, 53, 0.1);
+
+  border: 1px solid rgba(255, 107, 53, 0.2);
+
+  color: #ff6b35;
+
+  padding: 8px 12px;
+
+  border-radius: 6px;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+
+}
+
+
+
+.amount-quick-select button:hover {
+
+  background: rgba(255, 107, 53, 0.2);
+
+  border-color: rgba(255, 107, 53, 0.4);
+
+  transform: translateY(-1px);
+
+}
+
+
+
+.exness-balance-info-small.modern {
+
+  background: linear-gradient(145deg, #0b0e11 0%, #0d1115 100%);
+
+  border: 1px solid #1e2329;
+
+  border-radius: 8px;
+
+  padding: 12px;
+
+  margin-top: 8px;
+
+}
+
+
+
+.balance-info-row {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 8px;
+
+}
+
+
+
+.balance-amount {
+
+  font-weight: 700;
+
+  color: #ffffff;
+
+}
+
+
+
+.balance-progress {
+
+  height: 4px;
+
+  background: #1e2329;
+
+  border-radius: 2px;
+
+  overflow: hidden;
+
+  margin-top: 8px;
+
+}
+
+
+
+.progress-bar {
+
+  height: 100%;
+
+  background: linear-gradient(90deg, #ff6b35 0%, #f7931e 100%);
+
+  border-radius: 2px;
+
+  transition: width 0.3s ease;
+
+}
+
+
+
+/* Enhanced animations and transitions */
+
+.exness-trade-container * {
+
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+}
+
+
+
+/* Modern TradePanel Styles */
+
+.trade-panel.modern {
+
+  background: linear-gradient(145deg, #161a1e 0%, #1e2329 100%);
+
+  border-radius: 16px;
+
+  border: 1px solid #1e2329;
+
+  box-shadow: 
+
+    0 8px 32px rgba(0, 0, 0, 0.3),
+
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  overflow: hidden;
+
+}
+
+
+
+.trade-tabs.modern {
+
+  display: flex;
+
+  background: rgba(11, 14, 17, 0.6);
+
+  border-bottom: 1px solid #1e2329;
+
+}
+
+
+
+.trade-tab.modern {
+
+  flex: 1;
+
+  background: transparent;
+
+  border: none;
+
+  padding: 16px 20px;
+
+  cursor: pointer;
+
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  position: relative;
+
+  overflow: hidden;
+
+}
+
+
+
+.trade-tab.modern .tab-content {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+  z-index: 2;
+
+  position: relative;
+
+}
+
+
+
+.trade-tab.modern.active-buy {
+
+  background: linear-gradient(135deg, #0ecb81 0%, #00d4aa 100%);
+
+  color: #ffffff;
+
+  box-shadow: 0 4px 12px rgba(14, 203, 129, 0.4);
+
+}
+
+
+
+.trade-tab.modern.active-sell {
+
+  background: linear-gradient(135deg, #f6465d 0%, #ff4757 100%);
+
+  color: #ffffff;
+
+  box-shadow: 0 4px 12px rgba(246, 70, 93, 0.4);
+
+}
+
+
+
+.trade-tab.modern:not(.active-buy):not(.active-sell) {
+
+  color: #848e9c;
+
+}
+
+
+
+.trade-tab.modern:not(.active-buy):not(.active-sell):hover {
+
+  background: rgba(255, 107, 53, 0.1);
+
+  color: #ff6b35;
+
+}
+
+
+
+.trade-body.modern {
+
+  padding: 24px;
+
+}
+
+
+
+.trade-input-group.modern {
+
+  margin-bottom: 20px;
+
+}
+
+
+
+.trade-input-group.modern .trade-input-label {
+
+  display: block;
+
+  font-size: 12px;
+
+  color: #848e9c;
+
+  font-weight: 600;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+  margin-bottom: 8px;
+
+}
+
+
+
+.trade-input-wrap.modern {
+
+  position: relative;
+
+  background: linear-gradient(145deg, #0b0e11 0%, #0d1115 100%);
+
+  border: 1px solid #1e2329;
+
+  border-radius: 10px;
+
+  overflow: hidden;
+
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+}
+
+
+
+.trade-input-wrap.modern:focus-within {
+
+  border-color: #ff6b35;
+
+  box-shadow: 
+
+    0 0 0 2px rgba(255, 107, 53, 0.1),
+
+    inset 0 2px 4px rgba(0, 0, 0, 0.2);
+
+}
+
+
+
+.trade-input.modern {
+
+  width: 100%;
+
+  background: transparent;
+
+  border: none;
+
+  padding: 14px 16px;
+
+  color: #ffffff;
+
+  font-size: 15px;
+
+  font-weight: 600;
+
+  outline: none;
+
+}
+
+
+
+.trade-input.modern::placeholder {
+
+  color: #848e9c;
+
+}
+
+
+
+.trade-input-unit.modern {
+
+  position: absolute;
+
+  right: 16px;
+
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  font-size: 13px;
+
+  color: #848e9c;
+
+  font-weight: 600;
+
+  pointer-events: none;
+
+}
+
+
+
+.trade-slider-row.modern {
+
+  display: flex;
+
+  gap: 8px;
+
+  margin-bottom: 24px;
+
+}
+
+
+
+.pct-btn.modern {
+
+  flex: 1;
+
+  background: rgba(255, 107, 53, 0.1);
+
+  border: 1px solid rgba(255, 107, 53, 0.2);
+
+  color: #ff6b35;
+
+  padding: 12px 16px;
+
+  border-radius: 8px;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+}
+
+
+
+.pct-btn.modern:hover {
+
+  background: rgba(255, 107, 53, 0.2);
+
+  border-color: rgba(255, 107, 53, 0.4);
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2);
+
+}
+
+
+
+.trade-info.modern {
+
+  background: linear-gradient(145deg, #0b0e11 0%, #0d1115 100%);
+
+  border: 1px solid #1e2329;
+
+  border-radius: 12px;
+
+  padding: 20px;
+
+  margin-bottom: 24px;
+
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+
+}
+
+
+
+.trade-info-row.modern {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 12px;
+
+}
+
+
+
+.trade-info-row.modern:last-child {
+
+  margin-bottom: 0;
+
+}
+
+
+
+.trade-info-row.modern .info-label {
+
+  font-size: 13px;
+
+  color: #848e9c;
+
+  font-weight: 500;
+
+}
+
+
+
+.trade-info-row.modern .info-value {
+
+  font-size: 14px;
+
+  color: #ffffff;
+
+  font-weight: 700;
+
+}
+
+
+
+.trade-info-row.modern .info-value.highlight {
+
+  color: #ff6b35;
+
+  font-size: 16px;
+
+}
+
+
+
+.trade-btn-modern {
+
+  width: 100%;
+
+  height: 56px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  font-size: 16px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+
+  position: relative;
+
+  overflow: hidden;
+
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+
+}
+
+
+
+.trade-btn-modern .btn-content {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  z-index: 2;
+
+  position: relative;
+
+}
+
+
+
+.trade-btn-modern.trade-btn-buy {
+
+  background: linear-gradient(135deg, #0ecb81 0%, #00d4aa 100%);
+
+  color: #ffffff;
+
+  box-shadow: 0 4px 16px rgba(14, 203, 129, 0.4);
+
+}
+
+
+
+.trade-btn-modern.trade-btn-buy:hover {
+
+  background: linear-gradient(135deg, #0bb574 0%, #00c199 100%);
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 6px 20px rgba(14, 203, 129, 0.5);
+
+}
+
+
+
+.trade-btn-modern.trade-btn-sell {
+
+  background: linear-gradient(135deg, #f6465d 0%, #ff4757 100%);
+
+  color: #ffffff;
+
+  box-shadow: 0 4px 16px rgba(246, 70, 93, 0.4);
+
+}
+
+
+
+.trade-btn-modern.trade-btn-sell:hover {
+
+  background: linear-gradient(135deg, #e63946 0%, #f03e3e 100%);
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 6px 20px rgba(246, 70, 93, 0.5);
+
+}
+
+
+
+.trade-btn-modern::before {
+
+  content: '';
+
+  position: absolute;
+
+  top: 0;
+
+  left: -100%;
+
+  width: 100%;
+
+  height: 100%;
+
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+
+  transition: left 0.5s;
+
+}
+
+
+
+.trade-btn-modern:hover::before {
+
+  left: 100%;
+
+}
+
+
+
+/* Responsive Design for TradePanel */
+
+@media (max-width: 768px) {
+
+  .trade-panel.modern {
+
+    border-radius: 12px;
+
+    margin: 0 16px;
+
+  }
+
+  
+
+  .trade-body.modern {
+
+    padding: 20px;
+
+  }
+
+  
+
+  .trade-tab.modern {
+
+    padding: 14px 16px;
+
+  }
+
+  
+
+  .trade-tab.modern .tab-content {
+
+    font-size: 13px;
+
+  }
+
+  
+
+  .trade-input.modern {
+
+    padding: 12px 14px;
+
+    font-size: 14px;
+
+  }
+
+  
+
+  .pct-btn.modern {
+
+    padding: 10px 12px;
+
+    font-size: 12px;
+
+  }
+
+  
+
+  .trade-info.modern {
+
+    padding: 16px;
+
+  }
+
+  
+
+  .trade-btn-modern {
+
+    height: 48px;
+
+    font-size: 14px;
+
+  }
+
+}

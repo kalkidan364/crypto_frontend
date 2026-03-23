@@ -64,7 +64,7 @@ const EmailVerification = ({ onClose, showToast }) => {
     }
   };
 
-  const handleOtpSuccess = (response) => {
+  const handleOtpSuccess = () => {
     showToast('success', 'Email verified with OTP successfully!');
     setShowOtpVerification(false);
     fetchUser(); // Refresh user data

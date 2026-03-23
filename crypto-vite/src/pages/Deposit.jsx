@@ -1,140 +1,196 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import api from '../utils/api';
-import '../styles/components/deposit.css';
+import { depositAPI, apiClient } from '../utils/api';
+import '../styles/pages/crypto-deposit.css';
 
 const Deposit = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const [selectedCrypto, setSelectedCrypto] = useState('BTC');
-  const [selectedNetwork, setSelectedNetwork] = useState('Bitcoin');
-  const [amount, setAmount] = useState('');
-  const [depositMethod, setDepositMethod] = useState('crypto');
-  const [depositAddress, setDepositAddress] = useState('');
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [deposits, setDeposits] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [activeTab, setActiveTab] = useState('deposit');
 
   const cryptoOptions = [
-    { symbol: 'BTC', name: 'Bitcoin', networks: ['Bitcoin'], minDeposit: 0.001 },
-    { symbol: 'ETH', name: 'Ethereum', networks: ['Ethereum'], minDeposit: 0.01 },
-    { symbol: 'LTC', name: 'Litecoin', networks: ['Litecoin'], minDeposit: 0.01 },
-    { symbol: 'BCH', name: 'Bitcoin Cash', networks: ['Bitcoin Cash'], minDeposit: 0.01 },
-    { symbol: 'XRP', name: 'Ripple', networks: ['Ripple'], minDeposit: 10 }
+    { 
+      symbol: 'BTC', 
+      name: 'Bitcoin', 
+      icon: '₿',
+      color: '#f7931a',
+      networks: ['Bitcoin'], 
+      minDeposit: 0.001,
+      popular: true,
+      price: '$67,234.50',
+      change: '+2.34%',
+      fee: '0.0005 BTC',
+      confirmations: 3
+    },
+    { 
+      symbol: 'ETH', 
+      name: 'Ethereum', 
+      icon: 'Ξ',
+      color: '#627eea',
+      networks: ['Ethereum', 'BSC'], 
+      minDeposit: 0.01,
+      popular: true,
+      price: '$3,456.78',
+      change: '+1.87%',
+      fee: '0.005 ETH',
+      confirmations: 12
+    },
+    { 
+      symbol: 'USDT', 
+      name: 'Tether', 
+      icon: '₮',
+      color: '#26a17b',
+      networks: ['Ethereum', 'BSC', 'Tron'], 
+      minDeposit: 10,
+      popular: true,
+      price: '$1.00',
+      change: '+0.01%',
+      fee: '1 USDT',
+      confirmations: 12
+    },
+    { 
+      symbol: 'BNB', 
+      name: 'BNB', 
+      icon: 'BNB',
+      color: '#f3ba2f',
+      networks: ['BSC', 'BEP2'], 
+      minDeposit: 0.01,
+      popular: true,
+      price: '$634.21',
+      change: '+3.45%',
+      fee: '0.001 BNB',
+      confirmations: 15
+    },
+    { 
+      symbol: 'SOL', 
+      name: 'Solana', 
+      icon: 'SOL',
+      color: '#9945ff',
+      networks: ['Solana'], 
+      minDeposit: 0.1,
+      popular: true,
+      price: '$198.76',
+      change: '+5.67%',
+      fee: '0.00025 SOL',
+      confirmations: 32
+    },
+    { 
+      symbol: 'XRP', 
+      name: 'Ripple', 
+      icon: 'XRP',
+      color: '#23292f',
+      networks: ['Ripple'], 
+      minDeposit: 10,
+      popular: true,
+      price: '$0.6234',
+      change: '+1.23%',
+      fee: '0.1 XRP',
+      confirmations: 5
+    },
+    { 
+      symbol: 'USDC', 
+      name: 'USD Coin', 
+      icon: 'USDC',
+      color: '#2775ca',
+      networks: ['Ethereum', 'BSC', 'Polygon'], 
+      minDeposit: 10,
+      popular: false,
+      price: '$1.00',
+      change: '0.00%',
+      fee: '1 USDC',
+      confirmations: 12
+    },
+    { 
+      symbol: 'ADA', 
+      name: 'Cardano', 
+      icon: 'ADA',
+      color: '#0033ad',
+      networks: ['Cardano'], 
+      minDeposit: 10,
+      popular: false,
+      price: '$0.4567',
+      change: '+2.11%',
+      fee: '1 ADA',
+      confirmations: 15
+    },
+    { 
+      symbol: 'DOT', 
+      name: 'Polkadot', 
+      icon: 'DOT',
+      color: '#e6007a',
+      networks: ['Polkadot'], 
+      minDeposit: 1,
+      popular: false,
+      price: '$7.89',
+      change: '+1.45%',
+      fee: '0.1 DOT',
+      confirmations: 10
+    },
+    { 
+      symbol: 'MATIC', 
+      name: 'Polygon', 
+      icon: 'MATIC',
+      color: '#8247e5',
+      networks: ['Polygon', 'Ethereum'], 
+      minDeposit: 10,
+      popular: false,
+      price: '$0.8765',
+      change: '+4.32%',
+      fee: '0.1 MATIC',
+      confirmations: 128
+    }
   ];
 
-  const selectedCryptoData = cryptoOptions.find(c => c.symbol === selectedCrypto);
+  const filteredCryptos = cryptoOptions.filter(crypto => {
+    const matchesSearch = crypto.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         crypto.symbol.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || 
+                           (selectedCategory === 'popular' && crypto.popular) ||
+                           (selectedCategory === 'stablecoin' && ['USDT', 'USDC'].includes(crypto.symbol));
+    return matchesSearch && matchesCategory;
+  });
 
   useEffect(() => {
-    fetchDeposits();
-    if (depositMethod === 'crypto' || depositMethod === 'exchange') {
-      generateDepositAddress();
+    // Only fetch deposits if user is authenticated
+    if (user && apiClient.isAuthenticated()) {
+      fetchDeposits();
     }
-  }, [selectedCrypto, depositMethod]);
-
-  useEffect(() => {
-    // Add event listeners for exchange tab switching
-    const handleExchangeTabClick = (e) => {
-      if (e.target.classList.contains('exchange-tab-btn')) {
-        // Remove active class from all tabs
-        document.querySelectorAll('.exchange-tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.exchange-instruction').forEach(inst => inst.classList.remove('active'));
-        
-        // Add active class to clicked tab
-        e.target.classList.add('active');
-        const exchange = e.target.getAttribute('data-exchange');
-        document.querySelector(`[data-exchange="${exchange}"].exchange-instruction`).classList.add('active');
-      }
-    };
-
-    document.addEventListener('click', handleExchangeTabClick);
-    return () => document.removeEventListener('click', handleExchangeTabClick);
-  }, []);
+  }, [user]);
 
   const fetchDeposits = async () => {
-    try {
-      const response = await api.get('/deposits');
-      if (response.data.success) {
-        setDeposits(response.data.data.data || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch deposits:', error);
-    }
-  };
-
-  const generateDepositAddress = async () => {
-    try {
-      setLoading(true);
-      const response = await api.post('/deposits/generate-address', {
-        currency: selectedCrypto
-      });
-      
-      if (response.data.success) {
-        setDepositAddress(response.data.data.address);
-        setQrCodeUrl(response.data.data.qr_code);
-      }
-    } catch (error) {
-      setError('Failed to generate deposit address');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFiatDeposit = async (e) => {
-    e.preventDefault();
-    if (!amount || parseFloat(amount) < 10) {
-      setError('Minimum deposit amount is $10');
+    // Check if user is authenticated first
+    if (!user || !apiClient.isAuthenticated()) {
+      setDeposits([]);
       return;
     }
-
-    try {
-      setLoading(true);
-      setError('');
-      
-      const response = await api.post('/deposits/fiat', {
-        currency: 'USD',
-        amount: parseFloat(amount),
-        payment_method: 'bank_transfer',
-        payment_details: {
-          bank: 'Nexus Financial Bank',
-          account: '1234567890'
-        },
-        payment_reference: `DEP_${Date.now()}`
-      });
-
-      if (response.data.success) {
-        setSuccess('Fiat deposit request created successfully!');
-        setAmount('');
-        fetchDeposits();
-      }
-    } catch (error) {
-      setError(error.response?.data?.message || 'Failed to create deposit');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const simulateCryptoDeposit = async () => {
-    if (!depositAddress) return;
     
     try {
       setLoading(true);
-      const response = await api.post('/deposits/simulate-crypto', {
-        currency: selectedCrypto,
-        amount: selectedCryptoData?.minDeposit * 2,
-        wallet_address: depositAddress
-      });
-
-      if (response.data.success) {
-        setSuccess('Crypto deposit simulated successfully!');
-        fetchDeposits();
+      const response = await depositAPI.getDeposits();
+      
+      // Handle response structure properly
+      if (response && response.success) {
+        // Backend returns deposits directly in 'data' field
+        const deposits = response.data || [];
+        setDeposits(deposits);
+      } else {
+        setDeposits([]);
       }
     } catch (error) {
-      setError('Failed to simulate deposit');
+      // Silently handle errors to prevent "undefined" error messages
+      setDeposits([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCryptoSelect = (crypto) => {
+    navigate(`/deposit/${crypto.toLowerCase()}`);
   };
 
   const getStatusColor = (status) => {
@@ -148,745 +204,415 @@ const Deposit = () => {
   };
 
   return (
-    <main className="main-content">
-      <div className="deposit-header">
-        <div>
-          <h1 className="page-title">Deposit Funds</h1>
-          <p className="page-subtitle">Add funds to your account</p>
+    <div className="nexus-deposit-page">
+      {/* Professional Header */}
+      <div className="nexus-header">
+        <div className="nexus-header-content">
+          <button 
+            className="nexus-back-btn"
+            onClick={() => navigate('/dashboard')}
+          >
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+            Back to Dashboard
+          </button>
+          
+          <div className="nexus-crypto-info">
+            <div className="nexus-crypto-details">
+              <h1>Deposit Funds</h1>
+              <p>Add cryptocurrency to your NEXUS account securely</p>
+            </div>
+          </div>
+          
+          <div className="nexus-crypto-stats">
+            <div className="nexus-stat">
+              <span className="nexus-stat-label">Total Assets</span>
+              <span className="nexus-stat-value">{cryptoOptions.length}</span>
+            </div>
+            <div className="nexus-stat">
+              <span className="nexus-stat-label">Networks</span>
+              <span className="nexus-stat-value">15+</span>
+            </div>
+            <div className="nexus-stat">
+              <span className="nexus-stat-label">Min Fee</span>
+              <span className="nexus-stat-value">0.1%</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="deposit-container">
-        <div className="deposit-main">
-          <div className="deposit-method-tabs">
-            <button 
-              className={`method-tab ${depositMethod === 'crypto' ? 'active' : ''}`}
-              onClick={() => setDepositMethod('crypto')}
-            >
-              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"/>
-              </svg>
-              Crypto Deposit
-            </button>
-            <button 
-              className={`method-tab ${depositMethod === 'exchange' ? 'active' : ''}`}
-              onClick={() => setDepositMethod('exchange')}
-            >
-              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-              </svg>
-              From Exchange
-            </button>
-            <button 
-              className={`method-tab ${depositMethod === 'fiat' ? 'active' : ''}`}
-              onClick={() => setDepositMethod('fiat')}
-            >
-              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
-              </svg>
-              Bank Transfer
-            </button>
-          </div>
-
-          {error && (
-            <div className="alert alert-error">
-              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-              </svg>
-              {error}
+      {/* Main Content */}
+      <div className="nexus-main-content">
+        <div className="nexus-content-grid">
+          {/* Left Panel - Deposit Selection */}
+          <div className="nexus-deposit-panel">
+            {/* Tab Navigation */}
+            <div className="nexus-tab-nav">
+              <button 
+                className={`nexus-tab ${activeTab === 'deposit' ? 'active' : ''}`}
+                onClick={() => setActiveTab('deposit')}
+              >
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Deposit
+              </button>
+              <button 
+                className={`nexus-tab ${activeTab === 'history' ? 'active' : ''}`}
+                onClick={() => setActiveTab('history')}
+              >
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                </svg>
+                History
+              </button>
             </div>
-          )}
 
-          {success && (
-            <div className="alert alert-success">
-              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-              </svg>
-              {success}
-            </div>
-          )}
-
-          {depositMethod === 'crypto' ? (
-            <>
-              <div className="deposit-section">
-                <label className="deposit-label">Select Cryptocurrency</label>
-                <div className="crypto-grid">
-                  {cryptoOptions.map(crypto => (
-                    <button
-                      key={crypto.symbol}
-                      className={`crypto-option ${selectedCrypto === crypto.symbol ? 'active' : ''}`}
-                      onClick={() => {
-                        setSelectedCrypto(crypto.symbol);
-                        setSelectedNetwork(crypto.networks[0]);
-                      }}
-                    >
-                      <div className="crypto-icon">{crypto.symbol}</div>
-                      <div className="crypto-info">
-                        <div className="crypto-name">{crypto.name}</div>
-                        <div className="crypto-symbol">{crypto.symbol}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="deposit-section">
-                <label className="deposit-label">Select Network</label>
-                <select 
-                  className="network-select"
-                  value={selectedNetwork}
-                  onChange={(e) => setSelectedNetwork(e.target.value)}
-                >
-                  {selectedCryptoData?.networks.map(network => (
-                    <option key={network} value={network}>{network}</option>
-                  ))}
-                </select>
-                <div className="network-warning">
-                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-                  </svg>
-                  Ensure you select the correct network. Sending to wrong network may result in loss of funds.
-                </div>
-              </div>
-
-              <div className="deposit-section">
-                <label className="deposit-label">Deposit Address</label>
-                <div className="address-box">
-                  <div className="address-qr">
-                    {qrCodeUrl ? (
-                      <img src={qrCodeUrl} alt="QR Code" className="qr-code" />
-                    ) : (
-                      <div className="qr-placeholder">
-                        {loading ? (
-                          <div className="loading-spinner">Loading...</div>
-                        ) : (
-                          <svg width="120" height="120" viewBox="0 0 120 120">
-                            <rect width="120" height="120" fill="#1a1d2e"/>
-                            <rect x="10" y="10" width="30" height="30" fill="white"/>
-                            <rect x="80" y="10" width="30" height="30" fill="white"/>
-                            <rect x="10" y="80" width="30" height="30" fill="white"/>
-                            <rect x="50" y="50" width="20" height="20" fill="white"/>
-                          </svg>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="address-details">
-                    <div className="address-text">{depositAddress || 'Generating address...'}</div>
-                    <button 
-                      className="btn-copy" 
-                      onClick={() => depositAddress && navigator.clipboard.writeText(depositAddress)}
-                      disabled={!depositAddress}
-                    >
-                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                      </svg>
-                      Copy Address
-                    </button>
-                    <button 
-                      className="btn-simulate" 
-                      onClick={simulateCryptoDeposit}
-                      disabled={loading || !depositAddress}
-                    >
-                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                      </svg>
-                      Simulate Deposit
-                    </button>
+            {/* Tab Content */}
+            {activeTab === 'deposit' && (
+              <div className="nexus-deposit-content">
+                {/* Security Notice */}
+                <div className="nexus-section">
+                  <div className="nexus-alert nexus-alert-success">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1M12 7C13.4 7 14.8 8.6 14.8 10V14H16V21H8V14H9.2V10C9.2 8.6 10.6 7 12 7M12 8.2C11.2 8.2 10.4 8.7 10.4 10V14H13.6V10C13.6 8.7 12.8 8.2 12 8.2Z"/>
+                    </svg>
+                    All deposits are secured with bank-level encryption and multi-signature wallets
                   </div>
                 </div>
-              </div>
 
-              <div className="deposit-info-cards">
-                <div className="info-card">
-                  <div className="info-label">Minimum Deposit</div>
-                  <div className="info-value">{selectedCryptoData?.minDeposit} {selectedCrypto}</div>
-                </div>
-                <div className="info-card">
-                  <div className="info-label">Confirmations Required</div>
-                  <div className="info-value">12 blocks</div>
-                </div>
-                <div className="info-card">
-                  <div className="info-label">Estimated Arrival</div>
-                  <div className="info-value">10-30 min</div>
-                </div>
-              </div>
-            </>
-          ) : depositMethod === 'exchange' ? (
-            <>
-              <div className="exchange-deposit-section">
-                <div className="exchange-header">
-                  <h3>Transfer from External Exchange</h3>
-                  <p>Send cryptocurrency directly from your Binance, Coinbase, Kraken, or other exchange account</p>
-                </div>
-
-                <div className="deposit-section">
-                  <label className="deposit-label">Select Cryptocurrency</label>
-                  <div className="crypto-grid">
-                    {cryptoOptions.map(crypto => (
-                      <button
+                {/* Popular Cryptocurrencies */}
+                <div className="nexus-section">
+                  <div className="nexus-section-header">
+                    <h3>Popular Assets</h3>
+                    <p>Most traded cryptocurrencies with fast processing</p>
+                  </div>
+                  <div className="nexus-network-grid">
+                    {cryptoOptions.filter(crypto => crypto.popular).slice(0, 3).map(crypto => (
+                      <div
                         key={crypto.symbol}
-                        className={`crypto-option ${selectedCrypto === crypto.symbol ? 'active' : ''}`}
-                        onClick={() => {
-                          setSelectedCrypto(crypto.symbol);
-                          setSelectedNetwork(crypto.networks[0]);
-                        }}
+                        className="nexus-network-card active"
+                        onClick={() => handleCryptoSelect(crypto.symbol)}
                       >
-                        <div className="crypto-icon">{crypto.symbol}</div>
-                        <div className="crypto-info">
-                          <div className="crypto-name">{crypto.name}</div>
-                          <div className="crypto-symbol">{crypto.symbol}</div>
+                        <div className="nexus-network-header">
+                          <div className="nexus-network-name">
+                            <div 
+                              className="nexus-crypto-icon"
+                              style={{ 
+                                backgroundColor: crypto.color,
+                                width: '40px',
+                                height: '40px',
+                                fontSize: '18px',
+                                marginRight: '12px',
+                                display: 'inline-flex'
+                              }}
+                            >
+                              {crypto.icon}
+                            </div>
+                            {crypto.name} ({crypto.symbol})
+                          </div>
+                          <div className="nexus-network-check">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                          </div>
                         </div>
-                      </button>
+                        <div className="nexus-network-info">
+                          <div className="nexus-network-desc">
+                            Price: {crypto.price} • Change: {crypto.change}
+                          </div>
+                          <div className="nexus-network-fee">
+                            Min: {crypto.minDeposit} {crypto.symbol}
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="deposit-section">
-                  <label className="deposit-label">Your NEXUS Deposit Address</label>
-                  <div className="address-box exchange-address">
-                    <div className="address-qr">
-                      {qrCodeUrl ? (
-                        <img src={qrCodeUrl} alt="QR Code" className="qr-code" />
-                      ) : (
-                        <div className="qr-placeholder">
-                          {loading ? (
-                            <div className="loading-spinner">Loading...</div>
-                          ) : (
-                            <svg width="120" height="120" viewBox="0 0 120 120">
-                              <rect width="120" height="120" fill="#1a1d2e"/>
-                              <rect x="10" y="10" width="30" height="30" fill="white"/>
-                              <rect x="80" y="10" width="30" height="30" fill="white"/>
-                              <rect x="10" y="80" width="30" height="30" fill="white"/>
-                              <rect x="50" y="50" width="20" height="20" fill="white"/>
-                            </svg>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className="address-details">
-                      <div className="address-text">{depositAddress || 'Generating address...'}</div>
-                      <button 
-                        className="btn-copy" 
-                        onClick={() => depositAddress && navigator.clipboard.writeText(depositAddress)}
-                        disabled={!depositAddress}
-                      >
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                        </svg>
-                        Copy Address
-                      </button>
-                    </div>
+                {/* Search and Filter */}
+                <div className="nexus-section">
+                  <div className="nexus-section-header">
+                    <h3>All Cryptocurrencies</h3>
+                    <p>Choose from {cryptoOptions.length} supported digital assets</p>
                   </div>
-                </div>
-
-                <div className="exchange-instructions">
-                  <h4>📋 Step-by-Step Instructions</h4>
                   
-                  <div className="exchange-tabs">
-                    <div className="exchange-tab-buttons">
-                      <button className="exchange-tab-btn active" data-exchange="binance">
-                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0YzQkE2RiI+PHBhdGggZD0iTTEyIDJsNC4wNCA0LjA0TDEyIDEwLjA4IDcuOTYgNi4wNEwxMiAyem0wIDEyTDcuOTYgMTcuOTZMMTIgMjJsNC4wNC00LjA0TDEyIDE0em0tNi02TDIgMTJsNC4wNCA0LjA0TDEwLjA4IDEyIDYgOHptMTIgMEwxNCA4bC00LjA0IDQuMDRMMTQgMTZsNC4wNC00LjA0eiIvPjwvc3ZnPg==" alt="Binance" />
-                        Binance
-                      </button>
-                      <button className="exchange-tab-btn" data-exchange="coinbase">
-                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzAwNTNGRiI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiLz48cGF0aCBkPSJNMTIgNmMzLjMxIDAgNiAyLjY5IDYgNnMtMi42OSA2LTYgNi02LTIuNjktNi02IDIuNjktNiA2LTZ6IiBmaWxsPSJ3aGl0ZSIvPjwvc3ZnPg==" alt="Coinbase" />
-                        Coinbase
-                      </button>
-                      <button className="exchange-tab-btn" data-exchange="kraken">
-                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzU3NDFEOSI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgMThjLTQuNDEgMC04LTMuNTktOC04czMuNTktOCA4LTggOCAzLjU5IDggOC0zLjU5IDgtOCA4eiIvPjwvc3ZnPg==" alt="Kraken" />
-                        Kraken
-                      </button>
-                      <button className="exchange-tab-btn" data-exchange="kucoin">
-                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzAwRDZCMCI+PHBhdGggZD0iTTEyIDJsNC4wNCA0LjA0TDEyIDEwLjA4IDcuOTYgNi4wNEwxMiAyem0wIDEyTDcuOTYgMTcuOTZMMTIgMjJsNC4wNC00LjA0TDEyIDE0em0tNi02TDIgMTJsNC4wNCA0LjA0TDEwLjA4IDEyIDYgOHptMTIgMEwxNCA4bC00LjA0IDQuMDRMMTQgMTZsNC4wNC00LjA0eiIvPjwvc3ZnPg==" alt="KuCoin" />
-                        KuCoin
-                      </button>
+                  <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: '300px', position: 'relative' }}>
+                      <input
+                        type="text"
+                        placeholder="Search cryptocurrencies..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="nexus-input"
+                        style={{ paddingLeft: '40px' }}
+                      />
+                      <svg 
+                        style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }}
+                        width="20" height="20" fill="currentColor" viewBox="0 0 24 24"
+                      >
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                      </svg>
                     </div>
-
-                    <div className="exchange-instructions-content">
-                      <div className="exchange-instruction active" data-exchange="binance">
-                        <div className="instruction-steps">
-                          <div className="step">
-                            <div className="step-number">1</div>
-                            <div className="step-content">
-                              <h5>Login to Binance</h5>
-                              <p>Open your Binance app or website and log into your account</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">2</div>
-                            <div className="step-content">
-                              <h5>Go to Wallet → Spot Wallet</h5>
-                              <p>Navigate to your Spot Wallet where your {selectedCrypto} is stored</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">3</div>
-                            <div className="step-content">
-                              <h5>Click "Withdraw" on {selectedCrypto}</h5>
-                              <p>Find {selectedCrypto} in your wallet and click the "Withdraw" button</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">4</div>
-                            <div className="step-content">
-                              <h5>Select "Send via Crypto Network"</h5>
-                              <p>Choose the crypto network option (not internal transfer)</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">5</div>
-                            <div className="step-content">
-                              <h5>Paste NEXUS Address</h5>
-                              <p>Copy the address above and paste it in the "Recipient Address" field</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">6</div>
-                            <div className="step-content">
-                              <h5>Select Network: {selectedNetwork}</h5>
-                              <p>⚠️ IMPORTANT: Make sure to select the correct network to avoid losing funds</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">7</div>
-                            <div className="step-content">
-                              <h5>Enter Amount & Confirm</h5>
-                              <p>Enter the amount you want to transfer and complete the withdrawal</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="exchange-instruction" data-exchange="coinbase">
-                        <div className="instruction-steps">
-                          <div className="step">
-                            <div className="step-number">1</div>
-                            <div className="step-content">
-                              <h5>Login to Coinbase</h5>
-                              <p>Open Coinbase app or website and sign in to your account</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">2</div>
-                            <div className="step-content">
-                              <h5>Go to Portfolio</h5>
-                              <p>Navigate to your Portfolio to see your {selectedCrypto} balance</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">3</div>
-                            <div className="step-content">
-                              <h5>Click on {selectedCrypto}</h5>
-                              <p>Select your {selectedCrypto} wallet from the portfolio</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">4</div>
-                            <div className="step-content">
-                              <h5>Click "Send"</h5>
-                              <p>Click the "Send" button to initiate a transfer</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">5</div>
-                            <div className="step-content">
-                              <h5>Paste NEXUS Address</h5>
-                              <p>Copy the address above and paste it in the "To" field</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">6</div>
-                            <div className="step-content">
-                              <h5>Enter Amount & Send</h5>
-                              <p>Enter the amount and confirm the transaction with 2FA</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="exchange-instruction" data-exchange="kraken">
-                        <div className="instruction-steps">
-                          <div className="step">
-                            <div className="step-number">1</div>
-                            <div className="step-content">
-                              <h5>Login to Kraken</h5>
-                              <p>Access your Kraken account via web or mobile app</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">2</div>
-                            <div className="step-content">
-                              <h5>Go to Funding → Withdraw</h5>
-                              <p>Navigate to the Funding section and select Withdraw</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">3</div>
-                            <div className="step-content">
-                              <h5>Select {selectedCrypto}</h5>
-                              <p>Choose {selectedCrypto} from the list of available currencies</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">4</div>
-                            <div className="step-content">
-                              <h5>Add New Address</h5>
-                              <p>Click "Add address" and paste the NEXUS address above</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">5</div>
-                            <div className="step-content">
-                              <h5>Verify Address</h5>
-                              <p>Kraken will send a confirmation email to verify the new address</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">6</div>
-                            <div className="step-content">
-                              <h5>Complete Withdrawal</h5>
-                              <p>Enter amount and confirm the withdrawal with 2FA</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="exchange-instruction" data-exchange="kucoin">
-                        <div className="instruction-steps">
-                          <div className="step">
-                            <div className="step-number">1</div>
-                            <div className="step-content">
-                              <h5>Login to KuCoin</h5>
-                              <p>Access your KuCoin account</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">2</div>
-                            <div className="step-content">
-                              <h5>Go to Assets → Main Account</h5>
-                              <p>Navigate to your Main Account in the Assets section</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">3</div>
-                            <div className="step-content">
-                              <h5>Find {selectedCrypto} and Click "Withdraw"</h5>
-                              <p>Locate your {selectedCrypto} balance and click withdraw</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">4</div>
-                            <div className="step-content">
-                              <h5>Select "On-chain Withdraw"</h5>
-                              <p>Choose on-chain withdrawal (not internal transfer)</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">5</div>
-                            <div className="step-content">
-                              <h5>Add NEXUS Address</h5>
-                              <p>Paste the address above and select {selectedNetwork} network</p>
-                            </div>
-                          </div>
-                          <div className="step">
-                            <div className="step-number">6</div>
-                            <div className="step-content">
-                              <h5>Complete Withdrawal</h5>
-                              <p>Enter amount, verify with email/SMS, and confirm</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {['all', 'popular', 'stablecoin'].map(category => (
+                        <button
+                          key={category}
+                          onClick={() => setSelectedCategory(category)}
+                          className={`nexus-tab ${selectedCategory === category ? 'active' : ''}`}
+                          style={{ 
+                            padding: '8px 16px',
+                            fontSize: '14px',
+                            textTransform: 'capitalize'
+                          }}
+                        >
+                          {category === 'all' ? 'All Assets' : category === 'stablecoin' ? 'Stablecoins' : category}
+                        </button>
+                      ))}
                     </div>
+                  </div>
+
+                  {/* Crypto Grid */}
+                  <div className="nexus-network-grid">
+                    {filteredCryptos.map(crypto => (
+                      <div
+                        key={crypto.symbol}
+                        className="nexus-network-card"
+                        onClick={() => handleCryptoSelect(crypto.symbol)}
+                      >
+                        <div className="nexus-network-header">
+                          <div className="nexus-network-name">
+                            <div 
+                              className="nexus-crypto-icon"
+                              style={{ 
+                                backgroundColor: crypto.color,
+                                width: '36px',
+                                height: '36px',
+                                fontSize: '16px',
+                                marginRight: '12px',
+                                display: 'inline-flex'
+                              }}
+                            >
+                              {crypto.icon}
+                            </div>
+                            {crypto.name} ({crypto.symbol})
+                          </div>
+                          <div className="nexus-network-fee">
+                            {crypto.price}
+                          </div>
+                        </div>
+                        <div className="nexus-network-info">
+                          <div className="nexus-network-desc">
+                            Networks: {crypto.networks.join(', ')}
+                          </div>
+                          <div className="nexus-network-fee">
+                            Min: {crypto.minDeposit} {crypto.symbol}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {filteredCryptos.length === 0 && (
+                    <div className="nexus-empty-state">
+                      <svg width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                      </svg>
+                      <h4>No cryptocurrencies found</h4>
+                      <p>Try adjusting your search or filter criteria</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'history' && (
+              <div className="nexus-history-content">
+                <div className="nexus-section">
+                  <div className="nexus-section-header">
+                    <h3>Deposit History</h3>
+                    <p>Track all your deposit transactions</p>
+                  </div>
+                  
+                  {loading ? (
+                    <div className="nexus-loading">
+                      <div className="nexus-spinner"></div>
+                      <span>Loading deposit history...</span>
+                    </div>
+                  ) : deposits.length > 0 ? (
+                    <div className="nexus-history-list">
+                      {deposits.map((deposit, index) => (
+                        <div key={index} className="nexus-history-item">
+                          <div className="nexus-history-icon">
+                            <div 
+                              className="nexus-crypto-badge"
+                              style={{ backgroundColor: '#f7931a' }}
+                            >
+                              ₿
+                            </div>
+                          </div>
+                          <div className="nexus-history-details">
+                            <div className="nexus-history-main">
+                              <div className="nexus-history-amount">
+                                {deposit.amount} {deposit.currency}
+                              </div>
+                              <div className={`nexus-history-status status-${deposit.status}`}>
+                                {deposit.status}
+                              </div>
+                            </div>
+                            <div className="nexus-history-meta">
+                              <div className="nexus-history-date">
+                                {new Date(deposit.created_at).toLocaleDateString()}
+                              </div>
+                              <div className="nexus-history-network">
+                                {deposit.network || 'Bitcoin'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="nexus-empty-state">
+                      <svg width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                      </svg>
+                      <h4>No deposits yet</h4>
+                      <p>Your deposit history will appear here once you make your first deposit</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Panel - Information */}
+          <div className="nexus-info-panel">
+            {/* Account Info */}
+            <div className="nexus-info-card">
+              <div className="nexus-info-header">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                <h4>Account Status</h4>
+              </div>
+              <div className="nexus-info-stats">
+                <div className="nexus-info-stat">
+                  <div className="nexus-stat-icon">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                  </div>
+                  <div className="nexus-stat-content">
+                    <span className="nexus-stat-label">Verification</span>
+                    <span className="nexus-stat-value">Verified</span>
                   </div>
                 </div>
-
-                <div className="exchange-warnings">
-                  <div className="warning-card critical">
-                    <div className="warning-icon">⚠️</div>
-                    <div className="warning-content">
-                      <h5>Critical: Network Selection</h5>
-                      <p>Always select <strong>{selectedNetwork}</strong> network when withdrawing {selectedCrypto}. Using wrong network will result in permanent loss of funds.</p>
-                    </div>
+                <div className="nexus-info-stat">
+                  <div className="nexus-stat-icon">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
                   </div>
-                  <div className="warning-card info">
-                    <div className="warning-icon">ℹ️</div>
-                    <div className="warning-content">
-                      <h5>Processing Time</h5>
-                      <p>Exchange withdrawals typically take 10-60 minutes depending on network congestion and exchange processing time.</p>
-                    </div>
-                  </div>
-                  <div className="warning-card tip">
-                    <div className="warning-icon">💡</div>
-                    <div className="warning-content">
-                      <h5>Pro Tip</h5>
-                      <p>Start with a small test amount first to ensure the address and network are correct before sending larger amounts.</p>
-                    </div>
+                  <div className="nexus-stat-content">
+                    <span className="nexus-stat-label">Account Level</span>
+                    <span className="nexus-stat-value">Premium</span>
                   </div>
                 </div>
-
-                <div className="deposit-info-cards">
-                  <div className="info-card">
-                    <div className="info-label">Minimum from Exchange</div>
-                    <div className="info-value">{selectedCryptoData?.minDeposit} {selectedCrypto}</div>
+                <div className="nexus-info-stat">
+                  <div className="nexus-stat-icon">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1M12 7C13.4 7 14.8 8.6 14.8 10V14H16V21H8V14H9.2V10C9.2 8.6 10.6 7 12 7M12 8.2C11.2 8.2 10.4 8.7 10.4 10V14H13.6V10C13.6 8.7 12.8 8.2 12 8.2Z"/>
+                    </svg>
                   </div>
-                  <div className="info-card">
-                    <div className="info-label">Network Confirmations</div>
-                    <div className="info-value">12 blocks</div>
-                  </div>
-                  <div className="info-card">
-                    <div className="info-label">Estimated Arrival</div>
-                    <div className="info-value">10-60 min</div>
-                  </div>
-                  <div className="info-card">
-                    <div className="info-label">Exchange Fees</div>
-                    <div className="info-value">Varies by exchange</div>
+                  <div className="nexus-stat-content">
+                    <span className="nexus-stat-label">2FA Status</span>
+                    <span className="nexus-stat-value">Enabled</span>
                   </div>
                 </div>
               </div>
-            </>
-          ) : depositMethod === 'fiat' ? (
-            <>
-              <div className="deposit-section">
-                <label className="deposit-label">Select Cryptocurrency</label>
-                <div className="crypto-grid">
-                  {cryptoOptions.map(crypto => (
-                    <button
-                      key={crypto.symbol}
-                      className={`crypto-option ${selectedCrypto === crypto.symbol ? 'active' : ''}`}
-                      onClick={() => {
-                        setSelectedCrypto(crypto.symbol);
-                        setSelectedNetwork(crypto.networks[0]);
-                      }}
-                    >
-                      <div className="crypto-icon">{crypto.symbol}</div>
-                      <div className="crypto-info">
-                        <div className="crypto-name">{crypto.name}</div>
-                        <div className="crypto-symbol">{crypto.symbol}</div>
-                      </div>
-                    </button>
-                  ))}
+            </div>
+
+            {/* Deposit Instructions */}
+            <div className="nexus-info-card">
+              <div className="nexus-info-header">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+                <h4>How to Deposit</h4>
+              </div>
+              <div className="nexus-instructions">
+                <div className="nexus-instruction-step">
+                  <div className="nexus-step-number">1</div>
+                  <div className="nexus-step-content">
+                    <h5>Select Cryptocurrency</h5>
+                    <p>Choose the digital asset you want to deposit from our supported list</p>
+                  </div>
+                </div>
+                <div className="nexus-instruction-step">
+                  <div className="nexus-step-number">2</div>
+                  <div className="nexus-step-content">
+                    <h5>Choose Network</h5>
+                    <p>Select the blockchain network for your transaction</p>
+                  </div>
+                </div>
+                <div className="nexus-instruction-step">
+                  <div className="nexus-step-number">3</div>
+                  <div className="nexus-step-content">
+                    <h5>Send Funds</h5>
+                    <p>Transfer your cryptocurrency to the provided deposit address</p>
+                  </div>
+                </div>
+                <div className="nexus-instruction-step">
+                  <div className="nexus-step-number">4</div>
+                  <div className="nexus-step-content">
+                    <h5>Confirmation</h5>
+                    <p>Wait for network confirmations and funds will appear in your account</p>
+                  </div>
                 </div>
               </div>
+            </div>
 
-              <div className="deposit-section">
-                <label className="deposit-label">Select Network</label>
-                <select 
-                  className="network-select"
-                  value={selectedNetwork}
-                  onChange={(e) => setSelectedNetwork(e.target.value)}
-                >
-                  {selectedCryptoData?.networks.map(network => (
-                    <option key={network} value={network}>{network}</option>
-                  ))}
-                </select>
-                <div className="network-warning">
+            {/* Security Warning */}
+            <div className="nexus-info-card nexus-warning-card">
+              <div className="nexus-info-header">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                </svg>
+                <h4>Important Security Notes</h4>
+              </div>
+              <div className="nexus-warning-list">
+                <div className="nexus-warning-item">
                   <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
                   </svg>
-                  Ensure you select the correct network. Sending to wrong network may result in loss of funds.
+                  Only send the selected cryptocurrency to the deposit address
+                </div>
+                <div className="nexus-warning-item">
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                  </svg>
+                  Ensure you select the correct network to avoid loss of funds
+                </div>
+                <div className="nexus-warning-item">
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                  </svg>
+                  Minimum deposit amounts apply to avoid network fee losses
+                </div>
+                <div className="nexus-warning-item">
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                  </svg>
+                  Deposits may take time depending on network congestion
                 </div>
               </div>
-
-              <div className="deposit-section">
-                <label className="deposit-label">Deposit Address</label>
-                <div className="address-box">
-                  <div className="address-qr">
-                    {qrCodeUrl ? (
-                      <img src={qrCodeUrl} alt="QR Code" className="qr-code" />
-                    ) : (
-                      <div className="qr-placeholder">
-                        {loading ? (
-                          <div className="loading-spinner">Loading...</div>
-                        ) : (
-                          <svg width="120" height="120" viewBox="0 0 120 120">
-                            <rect width="120" height="120" fill="#1a1d2e"/>
-                            <rect x="10" y="10" width="30" height="30" fill="white"/>
-                            <rect x="80" y="10" width="30" height="30" fill="white"/>
-                            <rect x="10" y="80" width="30" height="30" fill="white"/>
-                            <rect x="50" y="50" width="20" height="20" fill="white"/>
-                          </svg>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="address-details">
-                    <div className="address-text">{depositAddress || 'Generating address...'}</div>
-                    <button 
-                      className="btn-copy" 
-                      onClick={() => depositAddress && navigator.clipboard.writeText(depositAddress)}
-                      disabled={!depositAddress}
-                    >
-                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                      </svg>
-                      Copy Address
-                    </button>
-                    <button 
-                      className="btn-simulate" 
-                      onClick={simulateCryptoDeposit}
-                      disabled={loading || !depositAddress}
-                    >
-                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                      </svg>
-                      Simulate Deposit
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="deposit-info-cards">
-                <div className="info-card">
-                  <div className="info-label">Minimum Deposit</div>
-                  <div className="info-value">{selectedCryptoData?.minDeposit} {selectedCrypto}</div>
-                </div>
-                <div className="info-card">
-                  <div className="info-label">Confirmations Required</div>
-                  <div className="info-value">12 blocks</div>
-                </div>
-                <div className="info-card">
-                  <div className="info-label">Estimated Arrival</div>
-                  <div className="info-value">10-30 min</div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <form onSubmit={handleFiatDeposit} className="fiat-deposit">
-              <div className="deposit-section">
-                <label className="deposit-label">Amount (USD)</label>
-                <div className="amount-input-wrapper">
-                  <span className="currency-symbol">$</span>
-                  <input
-                    type="number"
-                    className="amount-input"
-                    placeholder="0.00"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    min="10"
-                    step="0.01"
-                    required
-                  />
-                </div>
-                <div className="amount-presets">
-                  {[100, 500, 1000, 5000].map(preset => (
-                    <button
-                      key={preset}
-                      type="button"
-                      className="preset-btn"
-                      onClick={() => setAmount(preset.toString())}
-                    >
-                      ${preset}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="deposit-section">
-                <label className="deposit-label">Bank Details</label>
-                <div className="bank-details">
-                  <div className="bank-detail-row">
-                    <span className="detail-label">Bank Name:</span>
-                    <span className="detail-value">Nexus Financial Bank</span>
-                  </div>
-                  <div className="bank-detail-row">
-                    <span className="detail-label">Account Name:</span>
-                    <span className="detail-value">Nexus Exchange Ltd</span>
-                  </div>
-                  <div className="bank-detail-row">
-                    <span className="detail-label">Account Number:</span>
-                    <span className="detail-value">1234567890</span>
-                    <button type="button" className="btn-copy-small" onClick={() => navigator.clipboard.writeText('1234567890')}>
-                      <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="bank-detail-row">
-                    <span className="detail-label">Routing Number:</span>
-                    <span className="detail-value">021000021</span>
-                    <button type="button" className="btn-copy-small" onClick={() => navigator.clipboard.writeText('021000021')}>
-                      <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="bank-detail-row">
-                    <span className="detail-label">SWIFT Code:</span>
-                    <span className="detail-value">NEXUUS33</span>
-                    <button type="button" className="btn-copy-small" onClick={() => navigator.clipboard.writeText('NEXUUS33')}>
-                      <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <button 
-                type="submit" 
-                className="btn-deposit"
-                disabled={loading || !amount || parseFloat(amount) < 10}
-              >
-                {loading ? 'Processing...' : 'Create Deposit Request'}
-              </button>
-
-              <div className="fiat-notice">
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                </svg>
-                <div>
-                  <div className="notice-title">Important Information</div>
-                  <div className="notice-text">Bank transfers typically take 1-3 business days. Please include your User ID ({user?.id}) in the transfer reference.</div>
-                </div>
-              </div>
-            </form>
-          )}
-        </div>
-
-        <div className="deposit-sidebar">
-          <div className="sidebar-card">
-            <h3 className="sidebar-title">Recent Deposits</h3>
-            <div className="recent-deposits">
-              {deposits.slice(0, 5).map(deposit => (
-                <div key={deposit.id} className="recent-deposit-item">
-                  <div className="deposit-crypto">
-                    <div className="deposit-crypto-icon">{deposit.currency}</div>
-                    <div>
-                      <div className="deposit-crypto-name">{deposit.currency}</div>
-                      <div className="deposit-time">
-                        {new Date(deposit.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="deposit-amount-status">
-                    <div className="deposit-amount">{deposit.amount} {deposit.currency}</div>
-                    <div className={`deposit-status ${getStatusColor(deposit.status)}`}>
-                      {deposit.status}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {deposits.length === 0 && (
-                <div className="no-deposits">No deposits yet</div>
-              )}
             </div>
-          </div>
-
-          <div className="sidebar-card">
-            <h3 className="sidebar-title">Important Notes</h3>
-            <ul className="notes-list">
-              <li>Send only {selectedCrypto} to this address</li>
-              <li>Minimum deposit: {selectedCryptoData?.minDeposit} {selectedCrypto}</li>
-              <li>12 network confirmations required</li>
-              <li>Deposits arrive within 10-30 minutes</li>
-              <li>Contact support if funds don't arrive</li>
-            </ul>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 };
 

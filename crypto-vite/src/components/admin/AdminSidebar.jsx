@@ -1,77 +1,93 @@
-const AdminSidebar = ({ activeTab, onTabChange }) => {
+import "../../styles/admin/admin.css";
+import "../../styles/admin/sidebar-fix.css";
+
+const AdminSidebar = ({ activeTab, onTabChange, isOpen, onClose }) => {
   const navItems = [
     {
-      section: 'Overview',
+      section: 'OVERVIEW',
       items: [
         { id: 'dashboard', icon: '📊', label: 'Dashboard' },
         { id: 'analytics', icon: '📈', label: 'Analytics' }
       ]
     },
     {
-      section: 'Users',
+      section: 'USERS',
       items: [
         { id: 'users', icon: '👥', label: 'User Management' },
-        { id: 'kyc', icon: '🪪', label: 'KYC Management', badge: { text: '12', type: 'yellow' } }
+        { id: 'kyc', icon: '🪪', label: 'KYC Management' }
       ]
     },
     {
-      section: 'Finance',
+      section: 'FINANCE',
       items: [
-        { id: 'wallets', icon: '💰', label: 'Wallet Management' },
+        { id: 'wallet-management', icon: '💼', label: 'Wallet Management' },
         { id: 'deposits', icon: '📥', label: 'Deposits' },
-        { id: 'withdrawals', icon: '📤', label: 'Withdrawals', badge: { text: '5', type: 'red' } },
-        { id: 'investments', icon: '💎', label: 'Investment Plans' }
-      ]
-    },
-    {
-      section: 'Platform',
-      items: [
-        { id: 'trading', icon: '💱', label: 'Trading Mgmt' },
-        { id: 'referral', icon: '👥', label: 'Referral System' },
-        { id: 'tickets', icon: '🎫', label: 'Support Tickets', badge: { text: '7', type: 'red' } },
-        { id: 'settings', icon: '⚙️', label: 'System Settings' }
+        { id: 'withdrawals', icon: '📤', label: 'Withdrawals' },
+        { id: 'investments', icon: '📊', label: 'Investment Plans' }
       ]
     }
   ];
 
   return (
-    <div className="sidebar">
-      <div className="sidebar-stats">
-        <div className="ss-label">Platform Status</div>
-        <div className="ss-value" style={{fontSize: '14px', color: 'var(--green)', display: 'flex', alignItems: 'center', gap: '6px'}}>
-          <span className="online-dot"></span> OPERATIONAL
-        </div>
-        <div style={{marginTop: '8px', display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text2)'}}>
-          <span>Users Online</span>
-          <span style={{color: 'var(--cyan)'}}>1,247</span>
-        </div>
-        <div style={{display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text2)', marginTop: '4px'}}>
-          <span>Today Revenue</span>
-          <span style={{color: 'var(--green)'}}>$48.6K</span>
-        </div>
-      </div>
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="sidebar-overlay"
+          onClick={onClose}
+        />
+      )}
+      
+      <div className={`admin-sidebar ${isOpen ? 'open' : ''}`}>
+        {/* Mobile close button */}
+        <button 
+          className="sidebar-close-btn mobile-only"
+          onClick={onClose}
+        >
+          ✕
+        </button>
 
-      {navItems.map((section, sectionIndex) => (
-        <div key={sectionIndex} className="sidebar-section">
-          <div className="sidebar-label">{section.section}</div>
-          {section.items.map((item) => (
-            <button
-              key={item.id}
-              className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-              onClick={() => onTabChange(item.id)}
-            >
-              <span className="nav-icon">{item.icon}</span>
-              {item.label}
-              {item.badge && (
-                <span className={`nav-badge ${item.badge.type}`}>
-                  {item.badge.text}
-                </span>
-              )}
-            </button>
+        {/* Professional Admin Branding */}
+        <div className="sidebar-brand">
+          <div className="brand-logo">
+            <div className="logo-icon">
+              <span className="logo-text">NEXUS</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <div className="sidebar-nav">
+          {navItems.map((section, sectionIndex) => (
+            <div key={sectionIndex} className="nav-section">
+              <div className="nav-section-title">{section.section}</div>
+              <div className="nav-items">
+                {section.items.map((item) => (
+                  <button
+                    key={item.id}
+                    className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+                    onClick={() => {
+                      onTabChange(item.id);
+                      if (window.innerWidth <= 768) {
+                        onClose();
+                      }
+                    }}
+                  >
+                    <span className="nav-icon">{item.icon}</span>
+                    <span className="nav-text">{item.label}</span>
+                    {item.badge && (
+                      <span className={`nav-badge ${item.badge.type}`}>
+                        {item.badge.text}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
-      ))}
-    </div>
+      </div>
+    </>
   );
 };
 

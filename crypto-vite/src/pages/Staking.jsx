@@ -133,7 +133,7 @@ const Staking = () => {
   };
 
   return (
-    <main className="main-content">
+    <>
       <div className="staking-header">
         <div>
           <h1 className="page-title">Staking</h1>
@@ -364,7 +364,7 @@ const Staking = () => {
           </div>
         </div>
       )}
-    </main>
+    </>
   );
 };
 

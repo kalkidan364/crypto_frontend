@@ -1,12 +1,23 @@
 /* Reports Page Styles - NEXUS ULTRA Theme */
 
+.reports-page {
+  width: 100%;
+  max-width: 100%;
+  padding: 24px 32px !important; /* Override global styles */
+  background: #0a0e1a;
+  min-height: calc(100vh - 60px);
+  color: #ffffff;
+  margin: 0;
+  box-sizing: border-box;
+}
+
 /* Page Header */
 .page-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
 
 .pht {

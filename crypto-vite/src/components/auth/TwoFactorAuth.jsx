@@ -3,7 +3,7 @@ import { authAPI } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 const TwoFactorAuth = ({ onClose, showToast }) => {
-  const { user, fetchUser } = useAuth();
+  const { fetchUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState('status'); // status, setup, confirm, disable
   const [twoFactorData, setTwoFactorData] = useState(null);

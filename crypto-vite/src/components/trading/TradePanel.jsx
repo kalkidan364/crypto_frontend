@@ -33,71 +33,88 @@ const TradePanel = () => {
   };
 
   return (
-    <div className="trade-panel">
-      <div className="trade-tabs">
+    <div className="trade-panel modern">
+      <div className="trade-tabs modern">
         <div
-          className={`trade-tab buy ${tradeMode === 'buy' ? 'active-buy' : ''}`}
+          className={`trade-tab buy modern ${tradeMode === 'buy' ? 'active-buy' : ''}`}
           onClick={() => setTradeMode('buy')}
         >
-          BUY
+          <div className="tab-content">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7l3-7z"/>
+            </svg>
+            BUY
+          </div>
         </div>
         <div
-          className={`trade-tab sell ${tradeMode === 'sell' ? 'active-sell' : ''}`}
+          className={`trade-tab sell modern ${tradeMode === 'sell' ? 'active-sell' : ''}`}
           onClick={() => setTradeMode('sell')}
         >
-          SELL
+          <div className="tab-content">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7l3-7z"/>
+            </svg>
+            SELL
+          </div>
         </div>
       </div>
 
-      <div className="trade-body">
-        <div className="trade-input-group">
+      <div className="trade-body modern">
+        <div className="trade-input-group modern">
           <div className="trade-input-label">Price (USDT)</div>
-          <div className="trade-input-wrap">
+          <div className="trade-input-wrap modern">
             <input
               type="text"
+              className="trade-input modern"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
             />
-            <span className="trade-input-unit">USDT</span>
+            <span className="trade-input-unit modern">USDT</span>
           </div>
         </div>
 
-        <div className="trade-input-group">
+        <div className="trade-input-group modern">
           <div className="trade-input-label">Amount (BTC)</div>
-          <div className="trade-input-wrap">
+          <div className="trade-input-wrap modern">
             <input
               type="text"
+              className="trade-input modern"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
-            <span className="trade-input-unit">BTC</span>
+            <span className="trade-input-unit modern">BTC</span>
           </div>
         </div>
 
-        <div className="trade-slider-row">
-          <button className="pct-btn" onClick={() => setPct(25)}>25%</button>
-          <button className="pct-btn" onClick={() => setPct(50)}>50%</button>
-          <button className="pct-btn" onClick={() => setPct(75)}>75%</button>
-          <button className="pct-btn" onClick={() => setPct(100)}>MAX</button>
+        <div className="trade-slider-row modern">
+          <button className="pct-btn modern" onClick={() => setPct(25)}>25%</button>
+          <button className="pct-btn modern" onClick={() => setPct(50)}>50%</button>
+          <button className="pct-btn modern" onClick={() => setPct(75)}>75%</button>
+          <button className="pct-btn modern" onClick={() => setPct(100)}>MAX</button>
         </div>
 
-        <div className="trade-info">
-          <div className="trade-info-row">
-            <span>Available</span>
-            <span>1.2341 BTC</span>
+        <div className="trade-info modern">
+          <div className="trade-info-row modern">
+            <span className="info-label">Available</span>
+            <span className="info-value">1.2341 BTC</span>
           </div>
-          <div className="trade-info-row">
-            <span>Total</span>
-            <span>{total} USDT</span>
+          <div className="trade-info-row modern">
+            <span className="info-label">Total</span>
+            <span className="info-value highlight">{total} USDT</span>
           </div>
-          <div className="trade-info-row">
-            <span>Fee (0.1%)</span>
-            <span>{fee} USDT</span>
+          <div className="trade-info-row modern">
+            <span className="info-label">Fee (0.1%)</span>
+            <span className="info-value">{fee} USDT</span>
           </div>
         </div>
 
-        <button className={tradeMode === 'buy' ? 'trade-btn-buy' : 'trade-btn-sell'}>
-          {tradeMode === 'buy' ? 'BUY BTC' : 'SELL BTC'}
+        <button className={`trade-btn-modern ${tradeMode === 'buy' ? 'trade-btn-buy' : 'trade-btn-sell'}`}>
+          <div className="btn-content">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7l3-7z"/>
+            </svg>
+            {tradeMode === 'buy' ? 'BUY BTC' : 'SELL BTC'}
+          </div>
         </button>
       </div>
     </div>

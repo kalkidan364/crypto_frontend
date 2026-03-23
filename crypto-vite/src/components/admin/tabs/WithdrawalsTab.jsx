@@ -38,19 +38,14 @@ const WithdrawalsTab = ({ showToast }) => {
 
   const handleWithdrawalAction = async (withdrawalId, action) => {
     try {
-      const response = await fetch(`/api/admin/withdrawals/${withdrawalId}/${action}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        showToast('success', `Withdrawal ${action}d successfully`);
-        fetchWithdrawals();
+      if (action === 'approve') {
+        await adminAPI.approveWithdrawal(withdrawalId);
+      } else {
+        await adminAPI.rejectWithdrawal(withdrawalId, { reason: 'Rejected by admin' });
       }
+      
+      showToast('success', `Withdrawal ${action}d successfully`);
+      fetchWithdrawals();
     } catch (error) {
       console.error(`Failed to ${action} withdrawal:`, error);
       showToast('success', `Withdrawal ${action}d successfully (demo)`);
@@ -64,7 +59,11 @@ const WithdrawalsTab = ({ showToast }) => {
   };
 
   const filteredWithdrawals = withdrawals.filter(withdrawal => {
-    const matchesSearch = withdrawal.user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const userName = typeof withdrawal.user === 'string' 
+      ? withdrawal.user 
+      : withdrawal.user?.name || withdrawal.user?.email || '';
+    
+    const matchesSearch = userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          withdrawal.address?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCoin = coinFilter === 'all' || withdrawal.coin === coinFilter;
     const matchesStatus = statusFilter === 'all' || withdrawal.status === statusFilter;
@@ -117,87 +116,95 @@ const WithdrawalsTab = ({ showToast }) => {
     { key: 'actions', label: 'Actions' }
   ];
 
-  const formatWithdrawalRow = (withdrawal, index) => ({
-    user: (
-      <div className="user-chip">
-        <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{color: 'var(--bg-primary)'}}>
-          {withdrawal.user?.split(' ').map(n => n[0]).join('') || 'U'}
+  const formatWithdrawalRow = (withdrawal, index) => {
+    const userName = typeof withdrawal.user === 'string' 
+      ? withdrawal.user 
+      : withdrawal.user?.name || withdrawal.user?.email || 'Unknown User';
+    
+    const userInitials = userName.split(' ').map(n => n[0]).join('') || 'U';
+    
+    return {
+      user: (
+        <div className="user-chip">
+          <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{color: 'var(--bg-primary)'}}>
+            {userInitials}
+          </div>
+          <span style={{fontSize: '12px'}}>{userName}</span>
         </div>
-        <span style={{fontSize: '12px'}}>{withdrawal.user}</span>
-      </div>
-    ),
-    coin: (
-      <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}>
-        <span style={{fontSize: '14px'}}>{withdrawal.coin_icon}</span>
-        <span style={{fontFamily: 'var(--mono)', fontSize: '11px'}}>{withdrawal.coin}</span>
-      </div>
-    ),
-    amount: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--red)'}}>
-        -{withdrawal.amount}
-      </span>
-    ),
-    address: (
-      <span 
-        style={{
-          fontFamily: 'var(--mono)', 
-          fontSize: '10px', 
-          color: 'var(--text2)', 
-          cursor: 'pointer',
-          maxWidth: '120px',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          display: 'block'
-        }}
-        onClick={() => showToast('info', 'Address copied to clipboard')}
-        title={withdrawal.address}
-      >
-        {withdrawal.address}
-      </span>
-    ),
-    fee: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text2)'}}>
-        {withdrawal.fee}
-      </span>
-    ),
-    time: (
-      <span style={{fontFamily: 'var(--mono)', color: 'var(--text2)', fontSize: '11px'}}>
-        {withdrawal.time}
-      </span>
-    ),
-    status: (
-      <span className={`badge ${withdrawal.status}`}>
-        {withdrawal.status.toUpperCase()}
-      </span>
-    ),
-    actions: (
-      <div className="actions-cell">
-        <button 
-          className="action-btn view"
-          onClick={() => showToast('info', 'Withdrawal details modal coming soon')}
+      ),
+      coin: (
+        <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}>
+          <span style={{fontSize: '14px'}}>{withdrawal.coin_icon}</span>
+          <span style={{fontFamily: 'var(--mono)', fontSize: '11px'}}>{withdrawal.coin}</span>
+        </div>
+      ),
+      amount: (
+        <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--red)'}}>
+          -{withdrawal.amount}
+        </span>
+      ),
+      address: (
+        <span 
+          style={{
+            fontFamily: 'var(--mono)', 
+            fontSize: '10px', 
+            color: 'var(--text2)', 
+            cursor: 'pointer',
+            maxWidth: '120px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            display: 'block'
+          }}
+          onClick={() => showToast('info', 'Address copied to clipboard')}
+          title={withdrawal.address}
         >
-          View
-        </button>
-        {withdrawal.status === 'pending' && (
-          <>
-            <button 
-              className="action-btn approve"
-              onClick={() => handleWithdrawalAction(withdrawal.id, 'approve')}
-            >
-              Approve
-            </button>
-            <button 
-              className="action-btn reject"
-              onClick={() => handleWithdrawalAction(withdrawal.id, 'reject')}
-            >
-              Reject
-            </button>
-          </>
-        )}
-      </div>
-    )
-  });
+          {withdrawal.address}
+        </span>
+      ),
+      fee: (
+        <span style={{fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text2)'}}>
+          {withdrawal.fee}
+        </span>
+      ),
+      time: (
+        <span style={{fontFamily: 'var(--mono)', color: 'var(--text2)', fontSize: '11px'}}>
+          {withdrawal.time}
+        </span>
+      ),
+      status: (
+        <span className={`badge ${withdrawal.status}`}>
+          {withdrawal.status.toUpperCase()}
+        </span>
+      ),
+      actions: (
+        <div className="actions-cell">
+          <button 
+            className="action-btn view"
+            onClick={() => showToast('info', 'Withdrawal details modal coming soon')}
+          >
+            View
+          </button>
+          {withdrawal.status === 'pending' && (
+            <>
+              <button 
+                className="action-btn approve"
+                onClick={() => handleWithdrawalAction(withdrawal.id, 'approve')}
+              >
+                Approve
+              </button>
+              <button 
+                className="action-btn reject"
+                onClick={() => handleWithdrawalAction(withdrawal.id, 'reject')}
+              >
+                Reject
+              </button>
+            </>
+          )}
+        </div>
+      )
+    };
+  };
 
   if (loading) {
     return (
@@ -308,35 +315,43 @@ const WithdrawalsTab = ({ showToast }) => {
       <div className="grid-3-1" style={{marginTop: '20px'}}>
         <Panel title="Withdrawal Queue">
           <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
-            {filteredWithdrawals.filter(w => w.status === 'pending').slice(0, 3).map((withdrawal, index) => (
-              <div key={withdrawal.id} className="queue-item">
-                <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
-                  <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{width: '20px', height: '20px', fontSize: '8px'}}>
-                    {withdrawal.user?.split(' ').map(n => n[0]).join('') || 'U'}
+            {filteredWithdrawals.filter(w => w.status === 'pending').slice(0, 3).map((withdrawal, index) => {
+              const userName = typeof withdrawal.user === 'string' 
+                ? withdrawal.user 
+                : withdrawal.user?.name || withdrawal.user?.email || 'Unknown User';
+              
+              const userInitials = userName.split(' ').map(n => n[0]).join('') || 'U';
+              
+              return (
+                <div key={withdrawal.id} className="queue-item">
+                  <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
+                    <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{width: '20px', height: '20px', fontSize: '8px'}}>
+                      {userInitials}
+                    </div>
+                    <div>
+                      <div style={{fontSize: '12px', fontWeight: '500'}}>{userName}</div>
+                      <div style={{fontSize: '10px', color: 'var(--text2)'}}>{withdrawal.amount} {withdrawal.coin}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div style={{fontSize: '12px', fontWeight: '500'}}>{withdrawal.user}</div>
-                    <div style={{fontSize: '10px', color: 'var(--text2)'}}>{withdrawal.amount} {withdrawal.coin}</div>
+                  <div style={{display: 'flex', gap: '4px'}}>
+                    <button 
+                      className="action-btn approve"
+                      style={{padding: '4px 8px', fontSize: '10px'}}
+                      onClick={() => handleWithdrawalAction(withdrawal.id, 'approve')}
+                    >
+                      ✓
+                    </button>
+                    <button 
+                      className="action-btn reject"
+                      style={{padding: '4px 8px', fontSize: '10px'}}
+                      onClick={() => handleWithdrawalAction(withdrawal.id, 'reject')}
+                    >
+                      ✗
+                    </button>
                   </div>
                 </div>
-                <div style={{display: 'flex', gap: '4px'}}>
-                  <button 
-                    className="action-btn approve"
-                    style={{padding: '4px 8px', fontSize: '10px'}}
-                    onClick={() => handleWithdrawalAction(withdrawal.id, 'approve')}
-                  >
-                    ✓
-                  </button>
-                  <button 
-                    className="action-btn reject"
-                    style={{padding: '4px 8px', fontSize: '10px'}}
-                    onClick={() => handleWithdrawalAction(withdrawal.id, 'reject')}
-                  >
-                    ✗
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
             {filteredWithdrawals.filter(w => w.status === 'pending').length === 0 && (
               <div style={{textAlign: 'center', color: 'var(--text2)', fontSize: '12px', padding: '20px'}}>
                 No pending withdrawals

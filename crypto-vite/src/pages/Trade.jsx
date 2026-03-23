@@ -1,565 +1,690 @@
-import { useState, useEffect, useRef } from 'react';
-import { useOrderBook } from '../hooks/useOrderBook';
-import { useTradingData } from '../hooks/useTradingData';
-import { useMarketData } from '../hooks/useMarketData';
-import '../styles/components/trade.css';
+import { useState, useEffect, useRef } from "react";
+import { useOrderBook } from "../hooks/useOrderBook";
+import { useTradingData } from "../hooks/useTradingData";
+import { marketAPI } from "../utils/api";
+import PriceTicker from "../components/trading/PriceTicker";
+import "../styles/pages/trade.css";
 
-const Trade = () => {
-  const { marketData, loading: marketLoading } = useMarketData();
-  const [selectedPair, setSelectedPair] = useState('BTC');
-  const { orderBook, loading: orderBookLoading } = useOrderBook(selectedPair);
-  const { orders, placeOrder, cancelOrder, loading: tradingLoading } = useTradingData();
+function Trade() {
+  // Trading state
+  const [selectedCrypto, setSelectedCrypto] = useState("BTC");
+  const [orderType, setOrderType] = useState("market"); // market, limit, stop-loss, take-profit
+  const [tradeType, setTradeType] = useState("buy"); // buy, sell
+  const [amount, setAmount] = useState("");
+  const [price, setPrice] = useState("");
+  const [stopPrice, setStopPrice] = useState("");
+  const [takeProfitPrice, setTakeProfitPrice] = useState("");
   
-  const mainChartRef = useRef(null);
-  const depthChartRef = useRef(null);
-  const [tradeMode, setTradeMode] = useState('buy');
-  const [orderType, setOrderType] = useState('Limit');
-  const [activeTF, setActiveTF] = useState('4H');
-  const [price, setPrice] = useState('');
-  const [amount, setAmount] = useState('0.00000');
-  const [total, setTotal] = useState('0.00');
-  const [pct, setPct] = useState(100);
-  const [candles, setCandles] = useState([]);
-  const [orderMessage, setOrderMessage] = useState('');
+  // Chart and market data
+  const [selectedTime, setSelectedTime] = useState("30");
+  const [currentPrice, setCurrentPrice] = useState("0.00");
+  const [priceChange, setPriceChange] = useState(0);
+  const [volume, setVolume] = useState("0");
+  const [high, setHigh] = useState("0");
+  const [low, setLow] = useState("0");
+  const chartContainerRef = useRef(null);
+  
+  // Trading data
+  const [cryptocurrencies, setCryptocurrencies] = useState([]);
+  const [watchlist, setWatchlist] = useState([]);
+  
+  // UI state
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("orderbook"); // orderbook, trades, positions, history
+  const [leftSidebarTab, setLeftSidebarTab] = useState("markets"); // markets, watchlist, portfolio
+  
+  // Hooks
+  const { orderBook, loading: orderBookLoading } = useOrderBook(selectedCrypto);
+  const { 
+    openOrders, 
+    tradeHistory, 
+    positions, 
+    wallets, 
+    loading: tradingLoading,
+    cancelOrder: cancelTradingOrder,
+    placeOrder: placeTradingOrder
+  } = useTradingData();
 
-  // Get current pair data from market data
-  const activePair = marketData.find(coin => coin.sym === selectedPair) || {
-    sym: selectedPair,
-    name: selectedPair,
-    icon: selectedPair.charAt(0),
-    bg: 'radial-gradient(circle,#6b7280,#4b5563)',
-    price: 0,
-    c24: 0,
-    vol: '$0'
-  };
+ const timeframes = [
+  { label: "1m", value: "1" },
+  { label: "5m", value: "5" },
+  { label: "15m", value: "15" },
+  { label: "30m", value: "30" },
+  { label: "1h", value: "60" },
+  { label: "4h", value: "240" },
+  { label: "1d", value: "1D" },
+];
 
-  // Set initial price when pair changes
+  // Load initial data
   useEffect(() => {
-    if (activePair.price && !price) {
-      setPrice(activePair.price.toFixed(2));
-    }
-  }, [activePair.price, price]);
+    loadInitialData();
+  }, []);
 
-  const fmtPrice = (p) => {
-    return p < 1 ? `$${p.toFixed(4)}` : p < 100 ? `$${p.toFixed(2)}` : `$${p.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
-
-  const generateCandleData = (n = 120) => {
-    const newCandles = [];
-    let v = activePair.price * 0.88;
-    const now = Date.now();
-    for (let i = 0; i < n; i++) {
-      const open = v;
-      const move = (Math.random() - 0.47) * v * 0.018;
-      const close = v + move;
-      const high = Math.max(open, close) * (1 + Math.random() * 0.008);
-      const low = Math.min(open, close) * (1 - Math.random() * 0.008);
-      const vol = Math.random() * 800 + 100;
-      newCandles.push({ t: now - (n - i) * 4 * 3600000, o: open, h: high, l: low, c: close, v: vol });
-      v = close;
-    }
-    newCandles[newCandles.length - 1].c = activePair.price;
-    return newCandles;
-  };
-
-  useEffect(() => {
-    if (activePair.price > 0) {
-      const candleData = generateCandleData();
-      setCandles(candleData);
-    }
-  }, [activePair.price]); // Only depend on price, not the entire activePair object
-
-  useEffect(() => {
-    if (mainChartRef.current && candles.length > 0) {
-      drawMainChart();
-    }
-  }, [candles, activeTF]);
-
-  useEffect(() => {
-    if (depthChartRef.current && orderBook.asks && orderBook.bids) {
-      drawDepthChart();
-    }
-  }, [orderBook.asks, orderBook.bids, activePair.price]);
-
-  useEffect(() => {
-    const p = parseFloat(price) || activePair.price;
-    const amt = parseFloat(amount) || 0;
-    const t = p * amt;
-    setTotal(t.toFixed(2));
-  }, [price, amount, activePair.price]);
-
-  const drawMainChart = () => {
-    const canvas = mainChartRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.parentElement.clientWidth;
-    const H = canvas.parentElement.clientHeight;
-    canvas.width = W;
-    canvas.height = H;
-
-    if (!candles.length) return;
-
-    const pad = { l: 56, r: 12, t: 10, b: 44 };
-    const cw = W - pad.l - pad.r;
-    const ch = H - pad.t - pad.b - 36;
-    const prices = candles.flatMap(c => [c.h, c.l]);
-    const mn = Math.min(...prices) * 0.9994;
-    const mx = Math.max(...prices) * 1.0006;
-    const volMax = Math.max(...candles.map(c => c.v));
-
-    const tx = i => pad.l + (i + 0.5) / candles.length * cw;
-    const ty = v => pad.t + ch - ((v - mn) / (mx - mn)) * ch;
-    const cw2 = Math.max(1, (cw / candles.length) * 0.65);
-
-    ctx.fillStyle = '#101418';
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.strokeStyle = 'rgba(16,185,129,.06)';
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 5; i++) {
-      const y = pad.t + ch * (i / 5);
-      ctx.beginPath();
-      ctx.moveTo(pad.l, y);
-      ctx.lineTo(pad.l + cw, y);
-      ctx.stroke();
-    }
-
-    candles.forEach((c, i) => {
-      const up = c.c >= c.o;
-      const bh = (c.v / volMax) * 30;
-      ctx.fillStyle = up ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)';
-      ctx.fillRect(tx(i) - cw2 / 2, pad.t + ch + 4, cw2, bh);
-    });
-
-    candles.forEach((c, i) => {
-      const up = c.c >= c.o;
-      const col = up ? '#10b981' : '#ef4444';
-      const x = tx(i);
-      ctx.strokeStyle = col;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x, ty(c.h));
-      ctx.lineTo(x, ty(c.l));
-      ctx.stroke();
-      const bodyTop = ty(Math.max(c.o, c.c));
-      const bodyH = Math.max(1, Math.abs(ty(c.o) - ty(c.c)));
-      ctx.fillStyle = up ? 'rgba(16,185,129,.9)' : 'rgba(239,68,68,.85)';
-      ctx.fillRect(x - cw2 / 2, bodyTop, cw2, bodyH);
-    });
-  };
-
-  const drawDepthChart = () => {
-    const canvas = depthChartRef.current;
-    if (!canvas || !orderBook.asks || !orderBook.bids) return;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.parentElement.clientWidth;
-    const H = canvas.parentElement.clientHeight;
-    canvas.width = W;
-    canvas.height = H;
-
-    const base = activePair.price;
-    const depthBids = [];
-    const depthAsks = [];
-    let bcum = 0, acum = 0;
-    
-    // Use real order book data if available, otherwise generate mock data
-    if (orderBook.bids.length > 0 && orderBook.asks.length > 0) {
-      orderBook.bids.forEach(bid => {
-        bcum += bid.amount;
-        depthBids.push({ p: bid.price, v: bcum });
-      });
-      
-      orderBook.asks.forEach(ask => {
-        acum += ask.amount;
-        depthAsks.push({ p: ask.price, v: acum });
-      });
-    } else {
-      // Fallback to mock data
-      for (let i = 0; i < 40; i++) {
-        bcum += Math.random() * 2 + 0.1;
-        depthBids.push({ p: base - (i + 1) * base * 0.001, v: bcum });
-        acum += Math.random() * 2 + 0.1;
-        depthAsks.push({ p: base + (i + 1) * base * 0.001, v: acum });
-      }
-    }
-
-    const allPrices = [...depthBids.map(b => b.p), ...depthAsks.map(a => a.p)];
-    const mn = Math.min(...allPrices);
-    const mx = Math.max(...allPrices);
-    const mxVol = Math.max(bcum, acum) * 1.05;
-
-    const tx = p => ((p - mn) / (mx - mn)) * W;
-    const ty = v => H - 4 - ((v / mxVol) * (H - 12));
-
-    ctx.fillStyle = '#101418';
-    ctx.fillRect(0, 0, W, H);
-
-    const gb = ctx.createLinearGradient(0, 0, 0, H);
-    gb.addColorStop(0, 'rgba(16,185,129,.25)');
-    gb.addColorStop(1, 'rgba(16,185,129,0)');
-    ctx.beginPath();
-    ctx.moveTo(tx(depthBids[depthBids.length - 1].p), H);
-    [...depthBids].reverse().forEach(b => ctx.lineTo(tx(b.p), ty(b.v)));
-    ctx.lineTo(tx(base), H);
-    ctx.closePath();
-    ctx.fillStyle = gb;
-    ctx.fill();
-
-    const ga = ctx.createLinearGradient(0, 0, 0, H);
-    ga.addColorStop(0, 'rgba(239,68,68,.25)');
-    ga.addColorStop(1, 'rgba(239,68,68,0)');
-    ctx.beginPath();
-    ctx.moveTo(tx(base), H);
-    depthAsks.forEach(a => ctx.lineTo(tx(a.p), ty(a.v)));
-    ctx.lineTo(tx(depthAsks[depthAsks.length - 1].p), H);
-    ctx.closePath();
-    ctx.fillStyle = ga;
-    ctx.fill();
-  };
-
-
-
-
-  const handlePctClick = (percentage) => {
-    setPct(percentage);
-    const maxAmt = 1.2341; // This should come from wallet balance
-    setAmount((maxAmt * percentage / 100).toFixed(5));
-  };
-
-  const handlePlaceOrder = async () => {
+  const loadInitialData = async () => {
     try {
-      setOrderMessage('');
+      setLoading(true);
+      const cryptoResponse = await marketAPI.getCryptocurrencies();
       
+      if (cryptoResponse.success) {
+        setCryptocurrencies(cryptoResponse.data);
+        // Set default watchlist
+        setWatchlist(cryptoResponse.data.slice(0, 10));
+      } else {
+        // Use mock data if API fails
+        const mockCryptos = [
+          { symbol: 'BTC', name: 'Bitcoin', current_price: 50000, price_change_24h: 2.5 },
+          { symbol: 'ETH', name: 'Ethereum', current_price: 3000, price_change_24h: -1.2 },
+          { symbol: 'ADA', name: 'Cardano', current_price: 0.5, price_change_24h: 5.8 },
+          { symbol: 'DOT', name: 'Polkadot', current_price: 8, price_change_24h: -2.1 },
+          { symbol: 'LINK', name: 'Chainlink', current_price: 15, price_change_24h: 3.4 },
+          { symbol: 'UNI', name: 'Uniswap', current_price: 7, price_change_24h: -0.8 },
+          { symbol: 'LTC', name: 'Litecoin', current_price: 100, price_change_24h: 1.9 },
+          { symbol: 'BCH', name: 'Bitcoin Cash', current_price: 300, price_change_24h: -3.2 },
+          { symbol: 'XRP', name: 'Ripple', current_price: 0.6, price_change_24h: 4.1 },
+          { symbol: 'BNB', name: 'Binance Coin', current_price: 400, price_change_24h: 2.8 }
+        ];
+        setCryptocurrencies(mockCryptos);
+        setWatchlist(mockCryptos.slice(0, 5));
+      }
+    } catch (err) {
+      setError(err.message);
+      // Use mock data as fallback
+      const mockCryptos = [
+        { symbol: 'BTC', name: 'Bitcoin', current_price: 50000, price_change_24h: 2.5 },
+        { symbol: 'ETH', name: 'Ethereum', current_price: 3000, price_change_24h: -1.2 },
+        { symbol: 'ADA', name: 'Cardano', current_price: 0.5, price_change_24h: 5.8 },
+        { symbol: 'DOT', name: 'Polkadot', current_price: 8, price_change_24h: -2.1 },
+        { symbol: 'LINK', name: 'Chainlink', current_price: 15, price_change_24h: 3.4 }
+      ];
+      setCryptocurrencies(mockCryptos);
+      setWatchlist(mockCryptos.slice(0, 3));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initialize TradingView Widget
+  useEffect(() => {
+    if (chartContainerRef.current) {
+      const script = document.createElement("script");
+      script.src = "https://s3.tradingview.com/tv.js";
+      script.async = true;
+      script.onload = () => {
+        if (window.TradingView) {
+          new window.TradingView.widget({
+            autosize: true,
+            symbol: `BINANCE:${selectedCrypto}USDT`,
+            interval: selectedTime,
+            timezone: "Etc/UTC",
+            theme: "dark",
+            style: "1",
+            locale: "en",
+            toolbar_bg: "#0f0f1e",
+            enable_publishing: false,
+            hide_side_toolbar: false,
+            allow_symbol_change: true,
+            container_id: "tradingview_chart",
+            backgroundColor: "#0f0f1e",
+            gridColor: "#1a1a2e",
+            studies: ["Volume@tv-basicstudies", "RSI@tv-basicstudies", "MACD@tv-basicstudies"],
+            hide_top_toolbar: false,
+            hide_legend: false,
+            save_image: false,
+            withdateranges: true,
+            details: true,
+            hotlist: true,
+            calendar: false,
+          });
+        }
+      };
+      document.head.appendChild(script);
+
+      return () => {
+        if (document.head.contains(script)) {
+          document.head.removeChild(script);
+        }
+      };
+    }
+  }, [selectedTime, selectedCrypto]);
+
+  // Connect to Binance WebSocket for live price updates
+  useEffect(() => {
+    const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${selectedCrypto.toLowerCase()}usdt@ticker`);
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setCurrentPrice(parseFloat(data.c).toFixed(2));
+      setPriceChange(parseFloat(data.P).toFixed(2));
+      setVolume(parseFloat(data.v).toFixed(0));
+      setHigh(parseFloat(data.h).toFixed(2));
+      setLow(parseFloat(data.l).toFixed(2));
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [selectedCrypto]);
+
+  // Trading functions
+  const handlePlaceOrder = async () => {
+    if (!amount || (orderType !== 'market' && !price)) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setLoading(true);
       const orderData = {
-        cryptocurrency_symbol: selectedPair,
-        order_type: orderType.toLowerCase(),
-        side: tradeMode,
-        quantity: amount,
-        price: orderType === 'Limit' ? price : undefined
+        cryptocurrency: selectedCrypto,
+        type: tradeType,
+        order_type: orderType,
+        quantity: parseFloat(amount),
+        ...(orderType !== 'market' && { price: parseFloat(price) }),
+        ...(orderType === 'stop-loss' && { stop_price: parseFloat(stopPrice) }),
+        ...(orderType === 'take-profit' && { take_profit_price: parseFloat(takeProfitPrice) })
       };
 
-      const result = await placeOrder(orderData);
-      
-      if (result.success) {
-        setOrderMessage(`Order placed successfully! Order ID: ${result.order?.id}`);
-        // Reset form
-        setAmount('0.00000');
-        setTotal('0.00');
-        setPct(100);
+      const response = await placeTradingOrder(orderData);
+      if (response.success) {
+        setAmount('');
+        setPrice('');
+        setStopPrice('');
+        setTakeProfitPrice('');
+        setError(null);
       } else {
-        setOrderMessage(`Error: ${result.message}`);
+        setError(response.message || 'Failed to place order');
       }
-    } catch (error) {
-      setOrderMessage(`Error: ${error.message}`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Show loading state
-  if (marketLoading) {
-    return (
-      <main className="main-content">
-        <div className="loading-container" style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '50vh',
-          color: 'var(--text-secondary)'
-        }}>
-          <div>Loading trading data...</div>
-        </div>
-      </main>
-    );
-  }
+  const handleCancelOrder = async (orderId) => {
+    try {
+      const success = await cancelTradingOrder(orderId);
+      if (!success) {
+        setError('Failed to cancel order');
+      }
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
+  const addToWatchlist = (crypto) => {
+    if (!watchlist.find(item => item.symbol === crypto.symbol)) {
+      setWatchlist([...watchlist, crypto]);
+    }
+  };
 
+  const removeFromWatchlist = (symbol) => {
+    setWatchlist(watchlist.filter(item => item.symbol !== symbol));
+  };
 
   return (
-    <main className="main-content">
-      <div className="trade-container">
-        <div className="chart-area">
-          <div className="ca-toolbar">
-            {['1m', '5m', '15m', '1H', '4H', '1D', '1W'].map(tf => (
-              <button 
-                key={tf}
-                className={`ca-tf ${activeTF === tf ? 'on' : ''}`}
-                onClick={() => setActiveTF(tf)}
-              >
-                {tf}
-              </button>
-            ))}
-            <div className="ca-sep"></div>
-            <button className="ca-indicator on">MA</button>
-            <button className="ca-indicator">BB</button>
-            <button className="ca-indicator">RSI</button>
-          </div>
-          <div className="chart-wrap">
-            <canvas ref={mainChartRef}></canvas>
-          </div>
+    <div className="advanced-trade-page">
+      {/* Left Sidebar - Markets, Watchlist, Portfolio */}
+      <div className="trade-left-sidebar">
+        <div className="sidebar-tabs">
+          <button 
+            className={leftSidebarTab === 'markets' ? 'active' : ''}
+            onClick={() => setLeftSidebarTab('markets')}
+          >
+            Markets
+          </button>
+          <button 
+            className={leftSidebarTab === 'watchlist' ? 'active' : ''}
+            onClick={() => setLeftSidebarTab('watchlist')}
+          >
+            Watchlist
+          </button>
+          <button 
+            className={leftSidebarTab === 'portfolio' ? 'active' : ''}
+            onClick={() => setLeftSidebarTab('portfolio')}
+          >
+            Portfolio
+          </button>
         </div>
 
-        <div className="trade-panel">
-          <div className="tp-section">
-            <div className="tp-header">
-              <div className="tp-pair-selector" style={{ marginBottom: '0.5rem' }}>
-                <select 
-                  value={selectedPair} 
-                  onChange={(e) => setSelectedPair(e.target.value)}
-                  style={{
-                    background: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '4px',
-                    padding: '0.25rem 0.5rem',
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  {marketData.map(coin => (
-                    <option key={coin.sym} value={coin.sym}>
-                      {coin.sym}/USDT
-                    </option>
-                  ))}
-                </select>
+        <div className="sidebar-content">
+          {leftSidebarTab === 'markets' && (
+            <div className="markets-list">
+              <div className="search-box">
+                <input type="text" placeholder="Search markets..." />
               </div>
-              <div className="tp-pair-info">
-                <div className="tp-orb" style={{ background: activePair.bg }}>{activePair.icon}</div>
-                <div className="tp-pname">{activePair.sym} / USDT</div>
+              <div className="market-categories">
+                <button className="active">All</button>
+                <button>Favorites</button>
+                <button>USDT</button>
+                <button>BTC</button>
               </div>
-              <div className="bs-tabs">
-                <div 
-                  className={`bs-tab ${tradeMode === 'buy' ? 'on-buy' : ''}`}
-                  onClick={() => setTradeMode('buy')}
-                >
-                  Buy
+              <div className="markets-table">
+                <div className="table-header">
+                  <span>Pair</span>
+                  <span>Price</span>
+                  <span>24h%</span>
                 </div>
-                <div 
-                  className={`bs-tab ${tradeMode === 'sell' ? 'on-sell' : ''}`}
-                  onClick={() => setTradeMode('sell')}
-                >
-                  Sell
-                </div>
-              </div>
-              <div className="order-types">
-                {['Limit', 'Market', 'Stop-Limit', 'Stop-Mkt'].map(ot => (
-                  <button 
-                    key={ot}
-                    className={`ot-btn ${orderType === ot ? 'on' : ''}`}
-                    onClick={() => setOrderType(ot)}
+                {cryptocurrencies.slice(0, 20).map((crypto) => (
+                  <div 
+                    key={crypto.symbol} 
+                    className={`market-row ${selectedCrypto === crypto.symbol ? 'selected' : ''}`}
+                    onClick={() => setSelectedCrypto(crypto.symbol)}
                   >
-                    {ot}
-                  </button>
+                    <div className="pair-info">
+                      <span className="symbol">{crypto.symbol}/USDT</span>
+                      <span className="name">{crypto.name}</span>
+                    </div>
+                    <span className="price">${crypto.current_price?.toFixed(2) || '0.00'}</span>
+                    <span className={`change ${crypto.price_change_24h >= 0 ? 'positive' : 'negative'}`}>
+                      {crypto.price_change_24h >= 0 ? '+' : ''}{crypto.price_change_24h?.toFixed(2) || '0.00'}%
+                    </span>
+                    <button 
+                      className="add-watchlist"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToWatchlist(crypto);
+                      }}
+                    >
+                      ⭐
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
-          </div>
+          )}
 
-          <div className="tp-form">
-            <div className="tf-row">
-              <div className="tf-label">
-                <span>Price</span>
-                <span>Best: {fmtPrice(activePair.price)}</span>
+          {leftSidebarTab === 'watchlist' && (
+            <div className="watchlist">
+              <div className="watchlist-header">
+                <h3>My Watchlist</h3>
+                <span>{watchlist.length} pairs</span>
               </div>
-              <div className="tf-field">
-                <input 
-                  type="number" 
-                  value={price} 
-                  onChange={(e) => setPrice(e.target.value)}
-                />
-                <span className="tf-unit">USDT</span>
-              </div>
-            </div>
-            
-            <div className="tf-row">
-              <div className="tf-label">
-                <span>Amount</span>
-                <span>Avail: 1.2341 {activePair.sym}</span>
-              </div>
-              <div className="tf-field">
-                <input 
-                  type="number" 
-                  value={amount} 
-                  onChange={(e) => setAmount(e.target.value)}
-                />
-                <span className="tf-unit">{activePair.sym}</span>
-                <span className="tf-max" onClick={() => handlePctClick(100)}>MAX</span>
-              </div>
-            </div>
-
-            <div className="tf-row">
-              <div className="tf-label"><span>Total</span></div>
-              <div className="tf-field">
-                <input type="number" value={total} readOnly />
-                <span className="tf-unit">USDT</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="tp-actions">
-            <div className="pct-row">
-              {[25, 50, 75, 100].map(p => (
-                <button 
-                  key={p}
-                  className={`pct-btn ${pct === p ? 'on' : ''}`}
-                  onClick={() => handlePctClick(p)}
+              {watchlist.map((crypto) => (
+                <div 
+                  key={crypto.symbol} 
+                  className={`watchlist-item ${selectedCrypto === crypto.symbol ? 'selected' : ''}`}
+                  onClick={() => setSelectedCrypto(crypto.symbol)}
                 >
-                  {p}%
-                </button>
+                  <div className="crypto-info">
+                    <span className="symbol">{crypto.symbol}</span>
+                    <span className="price">${crypto.current_price?.toFixed(2) || '0.00'}</span>
+                  </div>
+                  <div className="crypto-stats">
+                    <span className={`change ${crypto.price_change_24h >= 0 ? 'positive' : 'negative'}`}>
+                      {crypto.price_change_24h >= 0 ? '+' : ''}{crypto.price_change_24h?.toFixed(2) || '0.00'}%
+                    </span>
+                    <button 
+                      className="remove-watchlist"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFromWatchlist(crypto.symbol);
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
+          )}
 
-            <div className="trade-summary">
-              <div className="ts-row">
-                <span>Price</span>
-                <span>{fmtPrice(parseFloat(price) || activePair.price)}</span>
-              </div>
-              <div className="ts-row">
-                <span>Amount</span>
-                <span>{amount} {activePair.sym}</span>
-              </div>
-              <div className="ts-row">
-                <span>Total</span>
-                <span>${total}</span>
-              </div>
-              <div className="ts-row">
-                <span>Fee (0.1%)</span>
-                <span>${(parseFloat(total) * 0.001).toFixed(2)}</span>
-              </div>
-            </div>
-
-            <button className={`exec-btn exec-${tradeMode}`} onClick={handlePlaceOrder} disabled={tradingLoading}>
-              {tradingLoading ? 'PLACING...' : `${tradeMode === 'buy' ? 'BUY' : 'SELL'} ${activePair.sym}`}
-            </button>
-            
-            {orderMessage && (
-              <div className={`order-message ${orderMessage.includes('Error') ? 'error' : 'success'}`} style={{
-                marginTop: '0.5rem',
-                padding: '0.5rem',
-                borderRadius: '4px',
-                fontSize: '0.875rem',
-                backgroundColor: orderMessage.includes('Error') ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
-                color: orderMessage.includes('Error') ? '#ef4444' : '#10b981',
-                border: `1px solid ${orderMessage.includes('Error') ? '#ef4444' : '#10b981'}`
-              }}>
-                {orderMessage}
-              </div>
-            )}
-          </div>
-
-          {/* Order Book Section */}
-          <div className="order-book-section" style={{ marginTop: '1rem' }}>
-            <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Order Book</h3>
-            {orderBookLoading ? (
-              <div style={{ color: 'var(--text-secondary)' }}>Loading order book...</div>
-            ) : (
-              <div className="order-book-container" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                <div className="asks-section">
-                  <h4 style={{ color: '#ef4444', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Asks (Sell Orders)</h4>
-                  {orderBook.asks?.slice(0, 10).map((ask, i) => (
-                    <div key={i} className="order-row" style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      fontSize: '0.75rem',
-                      color: 'var(--text-secondary)',
-                      padding: '0.125rem 0'
-                    }}>
-                      <span style={{ color: '#ef4444' }}>{fmtPrice(ask.price)}</span>
-                      <span>{ask.amount}</span>
-                      <span>{ask.total}</span>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="spread-info" style={{ 
-                  textAlign: 'center', 
-                  margin: '0.5rem 0',
-                  padding: '0.25rem',
-                  backgroundColor: 'rgba(107,114,128,0.1)',
-                  borderRadius: '4px',
-                  fontSize: '0.75rem'
-                }}>
-                  Spread: {orderBook.spread ? `$${orderBook.spread}` : 'N/A'}
-                </div>
-                
-                <div className="bids-section">
-                  <h4 style={{ color: '#10b981', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Bids (Buy Orders)</h4>
-                  {orderBook.bids?.slice(0, 10).map((bid, i) => (
-                    <div key={i} className="order-row" style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      fontSize: '0.75rem',
-                      color: 'var(--text-secondary)',
-                      padding: '0.125rem 0'
-                    }}>
-                      <span style={{ color: '#10b981' }}>{fmtPrice(bid.price)}</span>
-                      <span>{bid.amount}</span>
-                      <span>{bid.total}</span>
-                    </div>
-                  ))}
+          {leftSidebarTab === 'portfolio' && (
+            <div className="portfolio-overview">
+              <div className="portfolio-summary">
+                <h3>Portfolio Balance</h3>
+                <div className="total-balance">
+                  <span className="amount">$0.00</span>
+                  <span className="change positive">+0.00%</span>
                 </div>
               </div>
-            )}
-          </div>
-
-          {/* Recent Orders Section */}
-          <div className="recent-orders-section" style={{ marginTop: '1rem' }}>
-            <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Your Recent Orders</h3>
-            {orders.length === 0 ? (
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>No recent orders</div>
-            ) : (
-              <div className="orders-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                {orders.slice(0, 5).map((order) => (
-                  <div key={order.id} className="order-item" style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '0.5rem',
-                    marginBottom: '0.25rem',
-                    backgroundColor: 'rgba(107,114,128,0.05)',
-                    borderRadius: '4px',
-                    fontSize: '0.75rem'
-                  }}>
-                    <div>
-                      <span style={{ color: order.side === 'buy' ? '#10b981' : '#ef4444' }}>
-                        {order.side.toUpperCase()}
-                      </span>
-                      <span style={{ marginLeft: '0.5rem' }}>{order.cryptocurrency_symbol}</span>
+              <div className="portfolio-assets">
+                {wallets.map((wallet) => (
+                  <div key={wallet.cryptocurrency} className="asset-item">
+                    <div className="asset-info">
+                      <span className="symbol">{wallet.cryptocurrency}</span>
+                      <span className="balance">{wallet.balance}</span>
                     </div>
-                    <div style={{ color: 'var(--text-secondary)' }}>
-                      {order.quantity} @ {fmtPrice(order.price)}
-                    </div>
-                    <div>
-                      <span className={`status-${order.status}`} style={{
-                        color: order.status === 'filled' ? '#10b981' : 
-                              order.status === 'cancelled' ? '#ef4444' : '#f59e0b'
-                      }}>
-                        {order.status}
-                      </span>
-                      {order.status === 'pending' && (
-                        <button 
-                          onClick={() => cancelOrder(order.id)}
-                          style={{
-                            marginLeft: '0.5rem',
-                            padding: '0.125rem 0.25rem',
-                            fontSize: '0.625rem',
-                            background: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '2px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      )}
+                    <div className="asset-value">
+                      <span className="usd-value">$0.00</span>
+                      <span className="percentage">0%</span>
                     </div>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main Chart Area */}
+      <div className="trade-main-content">
+        {/* Price Ticker */}
+        <PriceTicker 
+          symbol={selectedCrypto}
+          pair="USDT"
+          exchange="Binance"
+        />
+
+        {/* Timeframe Controls */}
+        <div className="advanced-timeframe">
+          <div className="timeframe-buttons">
+            {timeframes.map((time) => (
+              <button
+                key={time.value}
+                className={`tf-btn ${selectedTime === time.value ? "active" : ""}`}
+                onClick={() => setSelectedTime(time.value)}
+              >
+                {time.label}
+              </button>
+            ))}
+          </div>
+          <div className="chart-tools">
+            <button className="tool-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Indicators
+            </button>
+            <button className="tool-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              Drawing
+            </button>
+            <button className="tool-btn">⚙️</button>
+          </div>
+        </div>
+
+        {/* Chart */}
+        <div className="advanced-chart" ref={chartContainerRef}>
+          <div id="tradingview_chart" className="tradingview-widget"></div>
+        </div>
+
+        {/* Trading Panel */}
+        <div className="advanced-trading-panel">
+          <div className="trading-tabs">
+            <button 
+              className={tradeType === 'buy' ? 'active buy' : 'buy'}
+              onClick={() => setTradeType('buy')}
+            >
+              Buy {selectedCrypto}
+            </button>
+            <button 
+              className={tradeType === 'sell' ? 'active sell' : 'sell'}
+              onClick={() => setTradeType('sell')}
+            >
+              Sell {selectedCrypto}
+            </button>
+          </div>
+
+          <div className="order-type-selector">
+            <select value={orderType} onChange={(e) => setOrderType(e.target.value)}>
+              <option value="market">Market Order</option>
+              <option value="limit">Limit Order</option>
+              <option value="stop-loss">Stop Loss</option>
+              <option value="take-profit">Take Profit</option>
+            </select>
+          </div>
+
+          <div className="trading-inputs">
+            {orderType !== 'market' && (
+              <div className="input-group">
+                <label>Price (USDT)</label>
+                <input
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
             )}
+
+            {orderType === 'stop-loss' && (
+              <div className="input-group">
+                <label>Stop Price (USDT)</label>
+                <input
+                  type="number"
+                  value={stopPrice}
+                  onChange={(e) => setStopPrice(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+            )}
+
+            {orderType === 'take-profit' && (
+              <div className="input-group">
+                <label>Take Profit Price (USDT)</label>
+                <input
+                  type="number"
+                  value={takeProfitPrice}
+                  onChange={(e) => setTakeProfitPrice(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+            )}
+
+            <div className="input-group">
+              <label>Amount ({selectedCrypto})</label>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+              />
+              <div className="percentage-buttons">
+                <button onClick={() => setAmount((parseFloat(amount) || 0) * 0.25)}>25%</button>
+                <button onClick={() => setAmount((parseFloat(amount) || 0) * 0.5)}>50%</button>
+                <button onClick={() => setAmount((parseFloat(amount) || 0) * 0.75)}>75%</button>
+                <button onClick={() => setAmount((parseFloat(amount) || 0) * 1)}>100%</button>
+              </div>
+            </div>
+
+            <div className="order-summary">
+              <div className="summary-row">
+                <span>Total:</span>
+                <span>{(parseFloat(amount) || 0) * (parseFloat(price) || parseFloat(currentPrice) || 0)} USDT</span>
+              </div>
+              <div className="summary-row">
+                <span>Fee:</span>
+                <span>0.1%</span>
+              </div>
+            </div>
+
+            <button 
+              className={`place-order-btn ${tradeType}`}
+              onClick={handlePlaceOrder}
+              disabled={loading}
+            >
+              {loading ? 'Placing Order...' : `${tradeType.toUpperCase()} ${selectedCrypto}`}
+            </button>
           </div>
         </div>
       </div>
-    </main>
+
+      {/* Right Sidebar - Order Book, Trades, Positions */}
+      <div className="trade-right-sidebar">
+        <div className="sidebar-tabs">
+          <button 
+            className={activeTab === 'orderbook' ? 'active' : ''}
+            onClick={() => setActiveTab('orderbook')}
+          >
+            Order Book
+          </button>
+          <button 
+            className={activeTab === 'trades' ? 'active' : ''}
+            onClick={() => setActiveTab('trades')}
+          >
+            Recent Trades
+          </button>
+          <button 
+            className={activeTab === 'positions' ? 'active' : ''}
+            onClick={() => setActiveTab('positions')}
+          >
+            Positions
+          </button>
+          <button 
+            className={activeTab === 'history' ? 'active' : ''}
+            onClick={() => setActiveTab('history')}
+          >
+            History
+          </button>
+        </div>
+
+        <div className="sidebar-content">
+          {activeTab === 'orderbook' && (
+            <div className="order-book">
+              <div className="order-book-header">
+                <span>Price (USDT)</span>
+                <span>Amount ({selectedCrypto})</span>
+                <span>Total</span>
+              </div>
+              
+              <div className="asks-section">
+                <div className="section-header">
+                  <span className="asks-label">Asks</span>
+                  <span className="spread">Spread: {orderBook.spread || '0.00'}</span>
+                </div>
+                {orderBookLoading ? (
+                  <div className="loading">Loading...</div>
+                ) : (
+                  orderBook.asks?.slice(0, 10).map((ask, index) => (
+                    <div key={index} className="order-row ask">
+                      <span className="price">{ask.price?.toFixed(2)}</span>
+                      <span className="amount">{ask.amount?.toFixed(6)}</span>
+                      <span className="total">{ask.total?.toFixed(2)}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="current-price">
+                <span className={priceChange >= 0 ? 'positive' : 'negative'}>
+                  ${currentPrice}
+                </span>
+              </div>
+
+              <div className="bids-section">
+                <div className="section-header">
+                  <span className="bids-label">Bids</span>
+                </div>
+                {orderBookLoading ? (
+                  <div className="loading">Loading...</div>
+                ) : (
+                  orderBook.bids?.slice(0, 10).map((bid, index) => (
+                    <div key={index} className="order-row bid">
+                      <span className="price">{bid.price?.toFixed(2)}</span>
+                      <span className="amount">{bid.amount?.toFixed(6)}</span>
+                      <span className="total">{bid.total?.toFixed(2)}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'trades' && (
+            <div className="recent-trades">
+              <div className="trades-header">
+                <span>Price (USDT)</span>
+                <span>Amount ({selectedCrypto})</span>
+                <span>Time</span>
+              </div>
+              {tradeHistory.slice(0, 20).map((trade, index) => (
+                <div key={index} className={`trade-row ${trade.type}`}>
+                  <span className="price">{trade.price}</span>
+                  <span className="amount">{trade.quantity}</span>
+                  <span className="time">{new Date(trade.created_at).toLocaleTimeString()}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'positions' && (
+            <div className="open-orders">
+              <div className="orders-header">
+                <h3>Open Orders</h3>
+                <span>{openOrders.length} orders</span>
+              </div>
+              {openOrders.map((order) => (
+                <div key={order.id} className="order-item">
+                  <div className="order-info">
+                    <span className={`order-type ${order.type}`}>{order.type.toUpperCase()}</span>
+                    <span className="pair">{order.cryptocurrency}/USDT</span>
+                  </div>
+                  <div className="order-details">
+                    <div className="detail-row">
+                      <span>Amount:</span>
+                      <span>{order.quantity} {order.cryptocurrency}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span>Price:</span>
+                      <span>${order.price}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span>Status:</span>
+                      <span className={`status ${order.status}`}>{order.status}</span>
+                    </div>
+                  </div>
+                  <button 
+                    className="cancel-order"
+                    onClick={() => handleCancelOrder(order.id)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'history' && (
+            <div className="trade-history">
+              <div className="history-header">
+                <h3>Trade History</h3>
+                <span>{tradeHistory.length} trades</span>
+              </div>
+              {tradeHistory.map((trade) => (
+                <div key={trade.id} className="history-item">
+                  <div className="trade-info">
+                    <span className={`trade-type ${trade.type}`}>{trade.type.toUpperCase()}</span>
+                    <span className="pair">{trade.cryptocurrency}/USDT</span>
+                    <span className="time">{new Date(trade.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <div className="trade-details">
+                    <div className="detail-row">
+                      <span>Amount:</span>
+                      <span>{trade.quantity} {trade.cryptocurrency}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span>Price:</span>
+                      <span>${trade.price}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span>Total:</span>
+                      <span>${(trade.quantity * trade.price).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="error-toast">
+          <span>{error}</span>
+          <button onClick={() => setError(null)}>×</button>
+        </div>
+      )}
+    </div>
   );
-};
+}
 
 export default Trade;

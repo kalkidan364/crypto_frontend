@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { adminAPI } from '../../../utils/api';
 import StatCard from '../components/StatCard';
 import Panel from '../components/Panel';
 import DataTable from '../components/DataTable';
@@ -17,15 +18,8 @@ const ReferralTab = ({ showToast }) => {
   const fetchReferralData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/referrals', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
+      const data = await adminAPI.getReferralPrograms();
+      if (data.success) {
         setReferralData(data.referral_data || mockReferralData);
         setReferralUsers(data.referral_users || mockReferralUsers);
         setReferralSettings(data.settings || mockReferralSettings);
@@ -47,18 +41,9 @@ const ReferralTab = ({ showToast }) => {
 
   const handlePayoutAction = async (userId, action) => {
     try {
-      const response = await fetch(`/api/admin/referrals/${userId}/payout`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        showToast('success', `Referral payout ${action}d successfully`);
-        fetchReferralData();
-      }
+      // Referral payout API not implemented yet
+      showToast('success', `Referral payout ${action}d successfully (demo)`);
+      fetchReferralData();
     } catch (error) {
       console.error(`Failed to ${action} payout:`, error);
       showToast('success', `Referral payout ${action}d successfully (demo)`);
@@ -69,7 +54,7 @@ const ReferralTab = ({ showToast }) => {
     {
       icon: '👥',
       label: 'Total Referrers',
-      value: '1,247',
+      value: referralData?.total_referrers?.toLocaleString() || '1,247',
       change: '▲ +84 new this month',
       type: 'cyan',
       changeType: 'up'
@@ -77,7 +62,7 @@ const ReferralTab = ({ showToast }) => {
     {
       icon: '🎯',
       label: 'Successful Referrals',
-      value: '3,842',
+      value: referralData?.successful_referrals?.toLocaleString() || '3,842',
       change: '▲ +284 this month',
       type: 'green',
       changeType: 'up'
@@ -85,7 +70,7 @@ const ReferralTab = ({ showToast }) => {
     {
       icon: '💰',
       label: 'Total Commissions Paid',
-      value: '$124K',
+      value: `$${Math.floor((referralData?.total_commissions || 124000) / 1000)}K`,
       change: '▲ +18.4% increase',
       type: 'yellow',
       changeType: 'up'
@@ -93,7 +78,7 @@ const ReferralTab = ({ showToast }) => {
     {
       icon: '📈',
       label: 'Conversion Rate',
-      value: '12.4%',
+      value: `${referralData?.conversion_rate || 12.4}%`,
       change: '▲ +2.1% improvement',
       type: 'blue',
       changeType: 'up'
@@ -111,18 +96,25 @@ const ReferralTab = ({ showToast }) => {
     { key: 'actions', label: 'Actions' }
   ];
 
-  const formatReferralUserRow = (user, index) => ({
-    user: (
-      <div className="user-chip">
-        <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{color: 'var(--bg-primary)'}}>
-          {user.name?.split(' ').map(n => n[0]).join('') || 'U'}
+  const formatReferralUserRow = (user, index) => {
+    const userName = typeof user.name === 'string' 
+      ? user.name 
+      : user.name || user.email || 'Unknown User';
+    
+    const userInitials = userName.split(' ').map(n => n[0]).join('') || 'U';
+    
+    return {
+      user: (
+        <div className="user-chip">
+          <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{color: 'var(--bg-primary)'}}>
+            {userInitials}
+          </div>
+          <div>
+            <div className="uc-name">{userName}</div>
+            <div className="uc-email">{user.email}</div>
+          </div>
         </div>
-        <div>
-          <div className="uc-name">{user.name}</div>
-          <div className="uc-email">{user.email}</div>
-        </div>
-      </div>
-    ),
+      ),
     referralCode: (
       <span 
         style={{
@@ -179,7 +171,8 @@ const ReferralTab = ({ showToast }) => {
         )}
       </div>
     )
-  });
+    };
+  };
 
   const topReferrers = referralUsers
     .sort((a, b) => b.total_referrals - a.total_referrals)
@@ -260,28 +253,36 @@ const ReferralTab = ({ showToast }) => {
 
           <Panel title="Top Referrers">
             <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-              {topReferrers.map((user, index) => (
-                <div key={user.id} className="top-referrer-item">
-                  <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
-                    <div className="rank-badge">#{index + 1}</div>
-                    <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{width: '20px', height: '20px', fontSize: '8px'}}>
-                      {user.name?.split(' ').map(n => n[0]).join('') || 'U'}
+              {topReferrers.map((user, index) => {
+                const userName = typeof user.name === 'string' 
+                  ? user.name 
+                  : user.name || user.email || 'Unknown User';
+                
+                const userInitials = userName.split(' ').map(n => n[0]).join('') || 'U';
+                
+                return (
+                  <div key={user.id} className="top-referrer-item">
+                    <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
+                      <div className="rank-badge">#{index + 1}</div>
+                      <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{width: '20px', height: '20px', fontSize: '8px'}}>
+                        {userInitials}
+                      </div>
+                      <div>
+                        <div style={{fontSize: '12px', fontWeight: '500'}}>{userName}</div>
+                        <div style={{fontSize: '10px', color: 'var(--text2)'}}>{user.referral_code}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div style={{fontSize: '12px', fontWeight: '500'}}>{user.name}</div>
-                      <div style={{fontSize: '10px', color: 'var(--text2)'}}>{user.referral_code}</div>
+                    <div style={{textAlign: 'right'}}>
+                      <div style={{fontSize: '12px', color: 'var(--accent-green)', fontFamily: 'var(--mono)'}}>
+                        {user.total_referrals} referrals
+                      </div>
+                      <div style={{fontSize: '10px', color: 'var(--accent-yellow)', fontFamily: 'var(--mono)'}}>
+                        ${user.total_earned.toLocaleString()} earned
+                      </div>
                     </div>
                   </div>
-                  <div style={{textAlign: 'right'}}>
-                    <div style={{fontSize: '12px', color: 'var(--accent-green)', fontFamily: 'var(--mono)'}}>
-                      {user.total_referrals} referrals
-                    </div>
-                    <div style={{fontSize: '10px', color: 'var(--accent-yellow)', fontFamily: 'var(--mono)'}}>
-                      ${user.total_earned.toLocaleString()} earned
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Panel>
         </div>
@@ -376,31 +377,39 @@ const ReferralTab = ({ showToast }) => {
 
           <Panel title="Payout Queue">
             <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-              {referralUsers.filter(u => u.pending_payout > 0).slice(0, 5).map((user, index) => (
-                <div key={user.id} className="payout-queue-item">
-                  <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
-                    <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{width: '20px', height: '20px', fontSize: '8px'}}>
-                      {user.name?.split(' ').map(n => n[0]).join('') || 'U'}
+              {referralUsers.filter(u => u.pending_payout > 0).slice(0, 5).map((user, index) => {
+                const userName = typeof user.name === 'string' 
+                  ? user.name 
+                  : user.name || user.email || 'Unknown User';
+                
+                const userInitials = userName.split(' ').map(n => n[0]).join('') || 'U';
+                
+                return (
+                  <div key={user.id} className="payout-queue-item">
+                    <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
+                      <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{width: '20px', height: '20px', fontSize: '8px'}}>
+                        {userInitials}
+                      </div>
+                      <div>
+                        <div style={{fontSize: '12px', fontWeight: '500'}}>{userName}</div>
+                        <div style={{fontSize: '10px', color: 'var(--text2)'}}>{user.referral_code}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div style={{fontSize: '12px', fontWeight: '500'}}>{user.name}</div>
-                      <div style={{fontSize: '10px', color: 'var(--text2)'}}>{user.referral_code}</div>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                      <span style={{fontSize: '12px', color: 'var(--accent-yellow)', fontFamily: 'var(--mono)'}}>
+                        ${user.pending_payout.toLocaleString()}
+                      </span>
+                      <button 
+                        className="action-btn approve"
+                        style={{padding: '4px 8px', fontSize: '10px'}}
+                        onClick={() => handlePayoutAction(user.id, 'process')}
+                      >
+                        Pay
+                      </button>
                     </div>
                   </div>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                    <span style={{fontSize: '12px', color: 'var(--accent-yellow)', fontFamily: 'var(--mono)'}}>
-                      ${user.pending_payout.toLocaleString()}
-                    </span>
-                    <button 
-                      className="action-btn approve"
-                      style={{padding: '4px 8px', fontSize: '10px'}}
-                      onClick={() => handlePayoutAction(user.id, 'process')}
-                    >
-                      Pay
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {referralUsers.filter(u => u.pending_payout > 0).length === 0 && (
                 <div style={{textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '12px', padding: '20px'}}>
                   No pending payouts

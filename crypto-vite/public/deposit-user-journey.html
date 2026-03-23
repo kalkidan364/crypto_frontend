@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💰 NEXUS Deposit User Journey</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(42, 42, 42, 0.8);
+            border-radius: 15px;
+            border: 2px solid #007bff;
+        }
+        .journey-section {
+            margin: 30px 0;
+            padding: 25px;
+            background: rgba(42, 42, 42, 0.6);
+            border-radius: 12px;
+            border-left: 5px solid #28a745;
+        }
+        .method-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        .method-card {
+            background: rgba(42, 42, 42, 0.8);
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid #007bff;
+        }
+        .method-card.demo {
+            border-color: #ffc107;
+        }
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        .step-number {
+            background: #007bff;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .step-content h4 {
+            margin: 0 0 8px 0;
+            color: #007bff;
+        }
+        .step-content p {
+            margin: 0;
+            color: #ccc;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .feature-card {
+            background: rgba(42, 42, 42, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #28a745;
+        }
+        .crypto-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: rgba(42, 42, 42, 0.6);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .crypto-table th,
+        .crypto-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+        .crypto-table th {
+            background: #007bff;
+            color: white;
+        }
+        .crypto-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .highlight {
+            background: linear-gradient(45deg, #007bff, #28a745);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+        .warning-box {
+            background: rgba(220, 53, 69, 0.1);
+            border: 2px solid #dc3545;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .success-box {
+            background: rgba(40, 167, 69, 0.1);
+            border: 2px solid #28a745;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .demo-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .demo-link {
+            background: #007bff;
+            color: white;
+            padding: 15px;
+            text-decoration: none;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .demo-link:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        .icon {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 How to Deposit on NEXUS Exchange</h1>
+            <p>Complete guide for depositing cryptocurrency on the NEXUS platform</p>
+        </div>
+
+        <div class="method-comparison">
+            <div class="method-card">
+                <h2><span class="icon">🦊</span>MetaMask Deposits (Real Blockchain)</h2>
+                <p><strong>Recommended for real trading</strong></p>
+                <ul>
+                    <li>✅ Real blockchain integration</li>
+                    <li>✅ Automatic detection</li>
+                    <li>✅ Your own wallet address</li>
+                    <li>✅ Instant processing after confirmations</li>
+                    <li>✅ Supports ETH, USDT, USDC, BNB</li>
+                </ul>
+            </div>
+
+            <div class="method-card demo">
+                <h2><span class="icon">🎮</span>Demo Deposits (Simulation)</h2>
+                <p><strong>Perfect for learning and testing</strong></p>
+                <ul>
+                    <li>🎮 Simulated deposits</li>
+                    <li>🎮 Manual processing</li>
+                    <li>🎮 System-generated addresses</li>
+                    <li>🎮 Instant crediting</li>
+                    <li>🎮 Supports all cryptocurrencies</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="journey-section">
+            <h2>🚀 Method 1: MetaMask Deposit (Real Blockchain)</h2>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>Access Deposit Page</h4>
+                    <p>Login → Click "Deposit" → Select cryptocurrency (ETH, USDT, USDC, BNB)</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>Connect MetaMask</h4>
+                    <p>Click "Connect MetaMask" → Approve in popup → Your address is displayed</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>Get Your Address</h4>
+                    <p>Copy your MetaMask address or scan QR code with mobile wallet</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h4>Send Cryptocurrency</h4>
+                    <p>From external wallet → Send to your NEXUS address → Use correct network</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <h4>Automatic Processing</h4>
+                    <p>System detects transaction → Waits for confirmations → Credits your balance</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="journey-section">
+            <h2>🎮 Method 2: Demo Deposit (Simulation)</h2>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>Select Cryptocurrency</h4>
+                    <p>Choose any supported crypto → System generates mock address</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>Fill Deposit Form</h4>
+                    <p>Enter amount → Upload transaction screenshot → Submit for review</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>Admin Processing</h4>
+                    <p>Admin reviews submission → Manual credit → Instant for demo</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="journey-section">
+            <h2>💎 Supported Cryptocurrencies</h2>
+            
+            <h3>Real Blockchain Deposits (MetaMask)</h3>
+            <table class="crypto-table">
+                <thead>
+                    <tr>
+                        <th>Crypto</th>
+                        <th>Network</th>
+                        <th>Min Deposit</th>
+                        <th>Confirmations</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>ETH</strong></td>
+                        <td>Ethereum</td>
+                        <td>0.01 ETH</td>
+                        <td>12 blocks</td>
+                        <td>~3 min</td>
+                    </tr>
+                    <tr>
+                        <td><strong>USDT</strong></td>
+                        <td>Ethereum</td>
+                        <td>10 USDT</td>
+                        <td>12 blocks</td>
+                        <td>~3 min</td>
+                    </tr>
+                    <tr>
+                        <td><strong>USDC</strong></td>
+                        <td>Ethereum</td>
+                        <td>10 USDC</td>
+                        <td>12 blocks</td>
+                        <td>~3 min</td>
+                    </tr>
+                    <tr>
+                        <td><strong>BNB</strong></td>
+                        <td>BSC</td>
+                        <td>0.01 BNB</td>
+                        <td>15 blocks</td>
+                        <td>~5 min</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Demo Deposits (All Cryptocurrencies)</h3>
+            <p>BTC, LTC, XRP, ADA, DOT, MATIC, SOL, and more - all processed manually for demo purposes</p>
+        </div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h3>🔒 Security Features</h3>
+                <ul>
+                    <li>Your own MetaMask address</li>
+                    <li>Blockchain confirmation tracking</li>
+                    <li>Address format validation</li>
+                    <li>Network compatibility checks</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h3>⚡ Automatic Detection</h3>
+                <ul>
+                    <li>Scans blockchain every minute</li>
+                    <li>Real-time transaction monitoring</li>
+                    <li>Confirmation progress tracking</li>
+                    <li>Automatic balance updates</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h3>📱 User-Friendly Interface</h3>
+                <ul>
+                    <li>QR codes for mobile wallets</li>
+                    <li>One-click address copying</li>
+                    <li>Real-time status updates</li>
+                    <li>Comprehensive deposit history</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h3>🎯 Multiple Options</h3>
+                <ul>
+                    <li>MetaMask integration</li>
+                    <li>System-generated addresses</li>
+                    <li>Manual deposit submission</li>
+                    <li>Demo mode for learning</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <h3>⚠️ Important Safety Notes</h3>
+            <ul>
+                <li><strong>Network Matching:</strong> Always use the correct blockchain network</li>
+                <li><strong>Address Verification:</strong> Double-check deposit address before sending</li>
+                <li><strong>Minimum Amounts:</strong> Respect minimum deposit requirements</li>
+                <li><strong>MetaMask Security:</strong> Only use official MetaMask extension</li>
+                <li><strong>Support Contact:</strong> Contact support if funds don't arrive within expected time</li>
+            </ul>
+        </div>
+
+        <div class="success-box">
+            <h3>✅ Success Indicators</h3>
+            <p><strong>Your deposit is successful when:</strong></p>
+            <ul>
+                <li>Transaction appears in blockchain explorer</li>
+                <li>Required confirmations are reached</li>
+                <li>Balance is updated in NEXUS wallet</li>
+                <li>Email confirmation is received</li>
+                <li>Funds are available for trading</li>
+            </ul>
+        </div>
+
+        <div class="journey-section">
+            <h2>🔗 Try It Now</h2>
+            <p>Ready to make your first deposit? Choose your preferred method:</p>
+            
+            <div class="demo-links">
+                <a href="/deposit/eth" class="demo-link">
+                    🦊 Deposit ETH with MetaMask
+                </a>
+                <a href="/deposit/usdt" class="demo-link">
+                    💰 Deposit USDT (ERC-20)
+                </a>
+                <a href="/deposit/bnb" class="demo-link">
+                    🟡 Deposit BNB (BSC)
+                </a>
+                <a href="/deposit/btc" class="demo-link">
+                    🎮 Try Demo Deposit (BTC)
+                </a>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; padding: 20px; border-top: 1px solid #444;">
+            <p><strong>NEXUS Exchange</strong> - Secure, Fast, User-Friendly Crypto Deposits</p>
+            <p><small>Real blockchain integration with educational demo mode</small></p>
+        </div>
+    </div>
+</body>
+</html>

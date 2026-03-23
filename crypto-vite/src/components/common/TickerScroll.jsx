@@ -1,29 +1,32 @@
 import React from 'react';
-import { COINS } from '../../utils/constants';
 
 const TickerScroll = () => {
-  // Double the coins for seamless loop
-  const allCoins = [...COINS, ...COINS];
+  const tickerData = [
+    { symbol: 'BTC', price: '$67,342.5', change: '+1.10%', isUp: true },
+    { symbol: 'ETH', price: '$3,541.2', change: '+2.34%', isUp: true },
+    { symbol: 'BNB', price: '$172.85', change: '-0.62%', isUp: false },
+    { symbol: 'AVAX', price: '$35.42', change: '+3.12%', isUp: true },
+    { symbol: 'BTC', price: '$67,342.5', change: '+1.60%', isUp: true },
+    { symbol: 'ETH', price: '$3,541.2', change: '+2.34%', isUp: true },
+    { symbol: 'SOL', price: '$172.85', change: '-0.62%', isUp: false },
+    { symbol: 'BNB', price: '$412.3', change: '+0.45%', isUp: true }
+  ];
 
   return (
-    <div className="ticker-scroll">
-      <div className="ticker-inner">
-        {allCoins.map((coin, index) => {
-          const isUp = coin.change >= 0;
-          return (
-            <div key={index} className="tick-item">
-              <span className="tick-name">{coin.ticker}</span>
-              <span className="tick-price">
-                {coin.price < 1 ? `$${coin.price.toFixed(4)}` : `$${coin.price.toLocaleString()}`}
-              </span>
-              <span className={`tick-change ${isUp ? 'up' : 'down'}`}>
-                {isUp ? '▲' : '▼'} {Math.abs(coin.change).toFixed(2)}%
-              </span>
-            </div>
-          );
-        })}
+    <div className="ticker-scroll-container">
+      <div className="ticker-scroll-inner">
+        {tickerData.map((item, index) => (
+          <div key={index} className="ticker-item-new">
+            <span className="ticker-symbol-new">{item.symbol}</span>
+            <span className="ticker-price-new">{item.price}</span>
+            <span className={`ticker-change-new ${item.isUp ? 'positive' : 'negative'}`}>
+              {item.change}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
 };
+
 export default TickerScroll;

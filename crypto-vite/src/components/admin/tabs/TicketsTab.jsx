@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { adminAPI } from '../../../utils/api';
 import StatCard from '../components/StatCard';
 import Panel from '../components/Panel';
 import DataTable from '../components/DataTable';
@@ -17,15 +18,8 @@ const TicketsTab = ({ showToast }) => {
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/tickets', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
+      const data = await adminAPI.getSupportTickets();
+      if (data.success) {
         setTickets(data.tickets || mockTickets);
       } else {
         setTickets(mockTickets);
@@ -41,18 +35,9 @@ const TicketsTab = ({ showToast }) => {
 
   const handleTicketAction = async (ticketId, action) => {
     try {
-      const response = await fetch(`/api/admin/tickets/${ticketId}/${action}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        showToast('success', `Ticket ${action}d successfully`);
-        fetchTickets();
-      }
+      // Support tickets API not implemented yet
+      showToast('success', `Ticket ${action}d successfully (demo)`);
+      fetchTickets();
     } catch (error) {
       console.error(`Failed to ${action} ticket:`, error);
       showToast('success', `Ticket ${action}d successfully (demo)`);
@@ -66,8 +51,12 @@ const TicketsTab = ({ showToast }) => {
   };
 
   const filteredTickets = tickets.filter(ticket => {
+    const userName = typeof ticket.user === 'string' 
+      ? ticket.user 
+      : ticket.user?.name || ticket.user?.email || '';
+    
     const matchesSearch = ticket.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          ticket.id?.toString().includes(searchTerm);
     const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
     const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
@@ -121,20 +110,27 @@ const TicketsTab = ({ showToast }) => {
     { key: 'actions', label: 'Actions' }
   ];
 
-  const formatTicketRow = (ticket, index) => ({
-    ticketId: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-tertiary)'}}>
-        #{String(ticket.id).padStart(4, '0')}
-      </span>
-    ),
-    user: (
-      <div className="user-chip">
-        <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{color: 'var(--bg-primary)', width: '20px', height: '20px', fontSize: '8px'}}>
-          {ticket.user?.split(' ').map(n => n[0]).join('') || 'U'}
+  const formatTicketRow = (ticket, index) => {
+    const userName = typeof ticket.user === 'string' 
+      ? ticket.user 
+      : ticket.user?.name || ticket.user?.email || 'Unknown User';
+    
+    const userInitials = userName.split(' ').map(n => n[0]).join('') || 'U';
+    
+    return {
+      ticketId: (
+        <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-tertiary)'}}>
+          #{String(ticket.id).padStart(4, '0')}
+        </span>
+      ),
+      user: (
+        <div className="user-chip">
+          <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{color: 'var(--bg-primary)', width: '20px', height: '20px', fontSize: '8px'}}>
+            {userInitials}
+          </div>
+          <span style={{fontSize: '12px'}}>{userName}</span>
         </div>
-        <span style={{fontSize: '12px'}}>{ticket.user}</span>
-      </div>
-    ),
+      ),
     subject: (
       <div>
         <div style={{fontSize: '12px', fontWeight: '500', marginBottom: '2px'}}>{ticket.subject}</div>
@@ -192,7 +188,8 @@ const TicketsTab = ({ showToast }) => {
         )}
       </div>
     )
-  });
+    };
+  };
 
   if (loading) {
     return (
@@ -362,7 +359,7 @@ const TicketsTab = ({ showToast }) => {
       <div className="grid-3-1" style={{marginTop: '20px'}}>
         <Panel title="Urgent Tickets">
           <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
-            {filteredTickets.filter(t => t.priority === 'urgent' || t.priority === 'high').slice(0, 4).map((ticket, index) => (
+            {filteredTickets.filter(t => t.priority === 'urgent' || t.priority === 'high').slice(0, 4).map((ticket) => (
               <div key={ticket.id} className="urgent-ticket-item">
                 <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
                   <span className={`badge ${ticket.priority}`} style={{fontSize: '8px', padding: '2px 4px'}}>

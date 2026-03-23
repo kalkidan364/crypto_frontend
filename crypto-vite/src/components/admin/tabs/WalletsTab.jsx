@@ -19,50 +19,64 @@ const WalletsTab = ({ showToast }) => {
       setLoading(true);
       const response = await adminAPI.getWallets();
       
+      console.log('Wallets API response:', response); // Debug log
+      
       if (response && response.success) {
-        setWalletData(response.wallet_data || mockWalletData);
-        setUserWallets(response.wallets || mockUserWallets);
-        showToast('success', 'Wallet data loaded successfully');
+        // Set real wallet data
+        const walletData = response.wallet_data || response.data?.wallet_data || {};
+        const wallets = response.wallets || response.data?.wallets || [];
+        
+        setWalletData(walletData);
+        setUserWallets(wallets);
+        
+        if (wallets.length > 0) {
+          showToast('success', `Loaded ${wallets.length} user wallets`);
+        } else {
+          showToast('info', 'No user wallets found');
+        }
       } else {
-        setWalletData(mockWalletData);
-        setUserWallets(mockUserWallets);
-        showToast('info', 'Using demo data for wallets');
+        showToast('error', 'Failed to load wallet data');
+        setWalletData({});
+        setUserWallets([]);
       }
     } catch (error) {
       console.error('Failed to fetch wallet data:', error);
-      setWalletData(mockWalletData);
-      setUserWallets(mockUserWallets);
-      showToast('info', 'Using demo data for wallets');
+      showToast('error', `Error loading wallets: ${error.message}`);
+      setWalletData({});
+      setUserWallets([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredWallets = userWallets.filter(wallet =>
-    wallet.user?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredWallets = userWallets.filter(wallet => {
+    const userName = typeof wallet.user === 'string' 
+      ? wallet.user 
+      : wallet.user?.name || wallet.user?.email || '';
+    return userName.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   const holdingsStats = [
     {
       icon: '₿',
       label: 'BTC Total Holdings',
-      value: '142.84',
-      change: '≈ $9.69M',
+      value: walletData?.total_btc?.toFixed(4) || '0.0000',
+      change: walletData?.total_btc_usd ? `≈ $${(walletData.total_btc_usd / 1000000).toFixed(2)}M` : '≈ $0',
       type: 'yellow',
       changeType: 'up'
     },
     {
       icon: 'Ξ',
       label: 'ETH Total Holdings',
-      value: '1,840',
-      change: '≈ $6.51M',
+      value: walletData?.total_eth?.toFixed(2) || '0.00',
+      change: walletData?.total_eth_usd ? `≈ $${(walletData.total_eth_usd / 1000000).toFixed(2)}M` : '≈ $0',
       type: 'blue',
       changeType: 'up'
     },
     {
       icon: 'USDT',
       label: 'USDT Total Holdings',
-      value: '$4.28M',
+      value: walletData?.total_usdt ? `$${(walletData.total_usdt / 1000000).toFixed(2)}M` : '$0',
       change: 'Stablecoin Reserve',
       type: 'green',
       changeType: 'up'
@@ -70,8 +84,8 @@ const WalletsTab = ({ showToast }) => {
     {
       icon: '◎',
       label: 'SOL Total Holdings',
-      value: '28,420',
-      change: '≈ $4.89M',
+      value: walletData?.total_sol?.toFixed(0) || '0',
+      change: walletData?.total_sol_usd ? `≈ $${(walletData.total_sol_usd / 1000000).toFixed(2)}M` : '≈ $0',
       type: 'cyan',
       changeType: 'up'
     }
@@ -86,44 +100,54 @@ const WalletsTab = ({ showToast }) => {
     { key: 'actions', label: 'Actions' }
   ];
 
-  const formatUserWalletRow = (wallet, index) => ({
-    user: (
-      <div className="user-chip">
-        <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{color: 'var(--bg-primary)', width: '24px', height: '24px', fontSize: '10px'}}>
-          {wallet.user?.split(' ').map(n => n[0]).join('') || 'U'}
+  const formatUserWalletRow = (wallet, index) => {
+    // Handle different data structures
+    const userName = wallet.user_name || wallet.user?.name || wallet.user?.email || 'Unknown User';
+    const userEmail = wallet.user_email || wallet.user?.email || '';
+    const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
+    
+    return {
+      user: (
+        <div className="user-chip">
+          <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{color: 'var(--bg-primary)', width: '24px', height: '24px', fontSize: '10px'}}>
+            {userInitials}
+          </div>
+          <div>
+            <div style={{fontSize: '12px', fontWeight: '600'}}>{userName}</div>
+            {userEmail && <div style={{fontSize: '10px', color: 'var(--text-tertiary)'}}>{userEmail}</div>}
+          </div>
         </div>
-        <span style={{fontSize: '12px'}}>{wallet.user}</span>
-      </div>
-    ),
-    btc: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px'}}>
-        {wallet.btc_balance || (Math.random() * 2).toFixed(4)}
-      </span>
-    ),
-    eth: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px'}}>
-        {wallet.eth_balance || (Math.random() * 5).toFixed(4)}
-      </span>
-    ),
-    usdt: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px'}}>
-        ${wallet.usdt_balance || Math.floor(Math.random() * 10000).toLocaleString()}
-      </span>
-    ),
-    totalUsd: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--cyan)'}}>
-        ${wallet.total_usd || Math.floor(Math.random() * 100000).toLocaleString()}
-      </span>
-    ),
-    actions: (
-      <button 
-        className="action-btn view"
-        onClick={() => showToast('info', 'User wallet details coming soon')}
-      >
-        View
-      </button>
-    )
-  });
+      ),
+      btc: (
+        <span style={{fontFamily: 'var(--mono)', fontSize: '11px'}}>
+          {parseFloat(wallet.btc_balance || 0).toFixed(8)}
+        </span>
+      ),
+      eth: (
+        <span style={{fontFamily: 'var(--mono)', fontSize: '11px'}}>
+          {parseFloat(wallet.eth_balance || 0).toFixed(6)}
+        </span>
+      ),
+      usdt: (
+        <span style={{fontFamily: 'var(--mono)', fontSize: '11px'}}>
+          ${parseFloat(wallet.usdt_balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+        </span>
+      ),
+      totalUsd: (
+        <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--cyan)'}}>
+          ${parseFloat(wallet.total_usd || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+        </span>
+      ),
+      actions: (
+        <button 
+          className="action-btn view"
+          onClick={() => showToast('info', `Viewing wallet for ${userName}`)}
+        >
+          View
+        </button>
+      )
+    };
+  };
 
   const systemWallets = [
     {
@@ -202,8 +226,16 @@ const WalletsTab = ({ showToast }) => {
             columns={userWalletColumns}
             data={filteredWallets.map(formatUserWalletRow)}
           />
+          {filteredWallets.length === 0 && (
+            <div style={{padding: '2rem', textAlign: 'center', color: 'var(--text-tertiary)'}}>
+              <p>No user wallets found</p>
+              <p style={{fontSize: '0.85rem', marginTop: '0.5rem'}}>
+                {searchTerm ? 'Try a different search term' : 'Users will appear here once they create wallets'}
+              </p>
+            </div>
+          )}
           <div className="pagination">
-            <div className="page-info">{filteredWallets.length} wallets</div>
+            <div className="page-info">{filteredWallets.length} wallet{filteredWallets.length !== 1 ? 's' : ''}</div>
             <div className="page-btns">
               <button className="page-btn active">1</button>
               <button className="page-btn">2</button>
@@ -248,21 +280,5 @@ const WalletsTab = ({ showToast }) => {
     </div>
   );
 };
-
-// Mock data
-const mockWalletData = {
-  total_btc: 142.84,
-  total_eth: 1840,
-  total_usdt: 4280000,
-  total_sol: 28420
-};
-
-const mockUserWallets = [
-  { user: 'John Doe', btc_balance: '0.45', eth_balance: '1.2', usdt_balance: '5000', total_usd: '84291' },
-  { user: 'Sarah Miller', btc_balance: '0.12', eth_balance: '2.5', usdt_balance: '12000', total_usd: '42180' },
-  { user: 'Alex Kumar', btc_balance: '1.8', eth_balance: '0.8', usdt_balance: '25000', total_usd: '128420' },
-  { user: 'Emma Wilson', btc_balance: '0.05', eth_balance: '0.3', usdt_balance: '8000', total_usd: '18920' },
-  { user: 'Priya Patel', btc_balance: '0.8', eth_balance: '1.5', usdt_balance: '15000', total_usd: '67400' }
-];
 
 export default WalletsTab;

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLayout } from '../../contexts/LayoutContext';
 import TickerScroll from '../common/TickerScroll';
 import '../../styles/components/topbar.css';
 
 const Topbar = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { sidebarCollapsed } = useLayout();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const handleLogout = async () => {
@@ -20,9 +22,10 @@ const Topbar = () => {
   };
 
   return (
-    <header className="topbar">
-      <div className="logo">
-        NEX<span>US</span>
+    <header className={`topbar ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <div className="topbar-brand">
+        <span className="brand-flag">🇺🇸</span>
+        <span className="brand-text">NEX<span className="brand-highlight">US</span></span>
       </div>
       
       <TickerScroll />

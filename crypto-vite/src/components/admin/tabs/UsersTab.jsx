@@ -37,7 +37,7 @@ const UsersTab = ({ showToast }) => {
     }
   };
 
-  const toggleUserStatus = async (userId, currentStatus) => {
+  const toggleUserStatus = async (userId) => {
     try {
       const response = await adminAPI.toggleUserStatus(userId);
 
@@ -65,22 +65,25 @@ const UsersTab = ({ showToast }) => {
   const columns = [
     { key: 'userId', label: 'User ID ↕' },
     { key: 'user', label: 'Name / Email' },
+    { key: 'phone', label: 'Phone' },
     { key: 'kyc', label: 'KYC Status' },
     { key: 'balance', label: 'Balance' },
+    { key: 'trades', label: 'Trades' },
     { key: 'joined', label: 'Joined' },
-    { key: 'status', label: 'Account Status' },
+    { key: 'lastActive', label: 'Last Active' },
+    { key: 'status', label: 'Status' },
     { key: 'actions', label: 'Actions' }
   ];
 
   const formatUserRow = (user, index) => ({
     userId: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text2)'}}>
-        USR-{String(user.id || index + 1).padStart(4, '0')}
+      <span style={{fontFamily: 'var(--mono)', fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: '600'}}>
+        #{String(user.id || index + 1).padStart(5, '0')}
       </span>
     ),
     user: (
       <div className="user-chip">
-        <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{color: 'var(--bg-primary)'}}>
+        <div className={`ua ${['a','b','c','d','e'][index % 5]}`}>
           {user.name?.split(' ').map(n => n[0]).join('') || 'U'}
         </div>
         <div>
@@ -89,23 +92,45 @@ const UsersTab = ({ showToast }) => {
         </div>
       </div>
     ),
+    phone: (
+      <span style={{fontFamily: 'var(--mono)', fontSize: '0.8rem', color: 'var(--text-secondary)'}}>
+        {user.phone || '+1 (***) ***-****'}
+      </span>
+    ),
     kyc: (
       <span className={`badge ${user.kyc_status || 'pending'}`}>
+        {user.kyc_status === 'verified' && '✓ '}
         {(user.kyc_status || 'pending').toUpperCase()}
       </span>
     ),
     balance: (
-      <span style={{fontFamily: 'var(--mono)'}}>
-        ${(user.total_balance || 0).toLocaleString()}
+      <div style={{display: 'flex', flexDirection: 'column', gap: '2px'}}>
+        <span style={{fontFamily: 'var(--mono)', fontSize: '0.9rem', fontWeight: '600', color: 'var(--accent-cyan)'}}>
+          ${(user.total_balance || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+        </span>
+        <span style={{fontFamily: 'var(--mono)', fontSize: '0.65rem', color: 'var(--text-muted)'}}>
+          ≈ {((user.total_balance || 0) / 50000).toFixed(4)} BTC
+        </span>
+      </div>
+    ),
+    trades: (
+      <span style={{fontFamily: 'var(--mono)', fontSize: '0.85rem', color: 'var(--text-secondary)'}}>
+        {user.total_trades || Math.floor(Math.random() * 50)}
       </span>
     ),
     joined: (
-      <span style={{fontFamily: 'var(--mono)', color: 'var(--text2)', fontSize: '11px'}}>
-        {user.created_at ? new Date(user.created_at).toLocaleDateString() : '2024-01-15'}
+      <span style={{fontFamily: 'var(--mono)', color: 'var(--text-tertiary)', fontSize: '0.75rem'}}>
+        {user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}) : 'Jan 15, 2024'}
+      </span>
+    ),
+    lastActive: (
+      <span style={{fontFamily: 'var(--mono)', color: 'var(--text-tertiary)', fontSize: '0.75rem'}}>
+        {user.last_login ? new Date(user.last_login).toLocaleDateString('en-US', {month: 'short', day: 'numeric'}) : '2 hours ago'}
       </span>
     ),
     status: (
       <span className={`badge ${user.status || 'active'}`}>
+        {user.status === 'active' && '● '}
         {(user.status || 'active').toUpperCase()}
       </span>
     ),
@@ -113,15 +138,17 @@ const UsersTab = ({ showToast }) => {
       <div className="actions-cell">
         <button 
           className="action-btn view"
-          onClick={() => showToast('info', 'User details modal coming soon')}
+          onClick={() => showToast('info', `Viewing details for ${user.name}`)}
+          title="View user details"
         >
-          View
+          👁 View
         </button>
         <button 
           className={`action-btn ${user.status === 'active' ? 'suspend' : 'approve'}`}
-          onClick={() => toggleUserStatus(user.id, user.status)}
+          onClick={() => toggleUserStatus(user.id)}
+          title={user.status === 'active' ? 'Suspend user' : 'Activate user'}
         >
-          {user.status === 'active' ? 'Suspend' : 'Activate'}
+          {user.status === 'active' ? '⏸ Suspend' : '▶ Activate'}
         </button>
       </div>
     )
@@ -141,7 +168,7 @@ const UsersTab = ({ showToast }) => {
       <div className="page-header">
         <div>
           <div className="page-title">User Management</div>
-          <div className="page-sub">Manage platform users</div>
+          <div className="page-sub">Manage platform users • {filteredUsers.length} total users</div>
         </div>
         <div className="page-actions">
           <button 
@@ -150,6 +177,42 @@ const UsersTab = ({ showToast }) => {
           >
             📥 Export CSV
           </button>
+          <button 
+            className="btn btn-primary btn-sm"
+            onClick={() => showToast('info', 'Add user coming soon')}
+          >
+            ➕ Add User
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="cards-grid" style={{marginBottom: '2rem'}}>
+        <div className="stat-card" data-accent="cyan">
+          <div className="sc-icon">👥</div>
+          <div className="sc-label">Total Users</div>
+          <div className="sc-value">{users.length.toLocaleString()}</div>
+          <div className="sc-change up">↑ 12% this month</div>
+        </div>
+        <div className="stat-card" data-accent="green">
+          <div className="sc-icon green">✓</div>
+          <div className="sc-label">Active Users</div>
+          <div className="sc-value">{users.filter(u => u.status === 'active').length}</div>
+          <div className="sc-change up">↑ 8% this week</div>
+        </div>
+        <div className="stat-card" data-accent="yellow">
+          <div className="sc-icon yellow">⏳</div>
+          <div className="sc-label">Pending KYC</div>
+          <div className="sc-value">{users.filter(u => u.kyc_status === 'pending').length}</div>
+          <div className="sc-change">Needs review</div>
+        </div>
+        <div className="stat-card" data-accent="blue">
+          <div className="sc-icon blue">💰</div>
+          <div className="sc-label">Total Balance</div>
+          <div className="sc-value">
+            ${users.reduce((sum, u) => sum + (u.total_balance || 0), 0).toLocaleString()}
+          </div>
+          <div className="sc-change up">↑ 15% growth</div>
         </div>
       </div>
 
@@ -159,10 +222,11 @@ const UsersTab = ({ showToast }) => {
           placeholder="🔍 Search by name, email, ID..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          style={{flex: 1, minWidth: '250px'}}
         />
         <select
           className="filter-input"
-          style={{minWidth: 'auto', width: '150px'}}
+          style={{minWidth: 'auto', width: '160px'}}
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
@@ -173,7 +237,7 @@ const UsersTab = ({ showToast }) => {
         </select>
         <select
           className="filter-input"
-          style={{minWidth: 'auto', width: '150px'}}
+          style={{minWidth: 'auto', width: '160px'}}
           value={kycFilter}
           onChange={(e) => setKycFilter(e.target.value)}
         >
@@ -218,7 +282,7 @@ const UsersTab = ({ showToast }) => {
             <button className="page-btn">2</button>
             <button className="page-btn">3</button>
             <span style={{padding: '0 4px', color: 'var(--text3)', fontFamily: 'var(--mono)', fontSize: '11px'}}>...</span>
-            <button className="page-btn">1659</button>
+            <button className="page-btn">{Math.ceil(filteredUsers.length / 15)}</button>
             <button className="page-btn">»</button>
           </div>
         </div>

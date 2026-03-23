@@ -4,7 +4,7 @@ import { useMarketData } from '../hooks/useMarketData';
 import '../styles/components/history.css';
 
 const Orders = () => {
-  const { orders, cancelOrder, loading, error, refreshOrders } = useTradingData();
+  const { openOrders, tradeHistory, cancelOrder, loading, error, refreshData: refreshOrders } = useTradingData();
   const { marketData } = useMarketData();
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -13,8 +13,16 @@ const Orders = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 15;
 
+  // Combine open orders and trade history for display
+  const orders = [...openOrders, ...tradeHistory];
+
   // Filter orders based on current filters
   useEffect(() => {
+    if (!orders || !Array.isArray(orders)) {
+      setFilteredOrders([]);
+      return;
+    }
+    
     let filtered = [...orders];
     
     if (statusFilter !== 'all') {
@@ -28,8 +36,8 @@ const Orders = () => {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(order => 
-        order.cryptocurrency_symbol.toLowerCase().includes(term) ||
-        order.id.toString().includes(term)
+        (order.cryptocurrency_symbol && order.cryptocurrency_symbol.toLowerCase().includes(term)) ||
+        (order.id && order.id.toString().includes(term))
       );
     }
     
@@ -59,6 +67,8 @@ const Orders = () => {
   };
 
   const getCryptoIcon = (symbol) => {
+    if (!symbol) return '?'; // Handle undefined/null symbols
+    
     const icons = {
       'BTC': '₿',
       'ETH': 'Ξ',
@@ -74,6 +84,8 @@ const Orders = () => {
   };
 
   const getCryptoBg = (symbol) => {
+    if (!symbol) return 'radial-gradient(circle,#6b7280,#4b5563)'; // Default gray for undefined symbols
+    
     const backgrounds = {
       'BTC': 'radial-gradient(circle,#ff9500,#f7931a)',
       'ETH': 'radial-gradient(circle,#8ea3f5,#627eea)',
@@ -114,7 +126,7 @@ const Orders = () => {
 
   if (loading) {
     return (
-      <main className="main-content">
+      <>
         <div className="history-container">
           <div className="loading-container" style={{ 
             display: 'flex', 
@@ -126,13 +138,13 @@ const Orders = () => {
             <div>Loading orders...</div>
           </div>
         </div>
-      </main>
+      </>
     );
   }
 
   if (error) {
     return (
-      <main className="main-content">
+      <>
         <div className="history-container">
           <div className="error-container" style={{ 
             display: 'flex', 
@@ -159,12 +171,12 @@ const Orders = () => {
             </button>
           </div>
         </div>
-      </main>
+      </>
     );
   }
 
   return (
-    <main className="main-content">
+    <>
       <div className="history-container">
         <div className="page-header">
           <div className="ph-left">
@@ -390,7 +402,7 @@ const Orders = () => {
           )}
         </div>
       </div>
-    </main>
+    </>
   );
 };
 

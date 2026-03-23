@@ -1,6 +1,5 @@
 // API Configuration and utilities
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
-
 // API client with authentication
 class ApiClient {
   constructor() {
@@ -18,8 +17,34 @@ class ApiClient {
     }
   }
 
+  // Check if user is authenticated
+  isAuthenticated() {
+    // Always check localStorage for the most current token
+    const currentToken = localStorage.getItem('auth_token');
+    if (currentToken && currentToken !== this.token) {
+      this.token = currentToken;
+    }
+    return !!this.token;
+  }
+
+  // Get current token
+  getToken() {
+    // Always check localStorage for the most current token
+    const currentToken = localStorage.getItem('auth_token');
+    if (currentToken && currentToken !== this.token) {
+      this.token = currentToken;
+    }
+    return this.token;
+  }
+
   // Get authentication headers
   getHeaders() {
+    // Always get the latest token from localStorage
+    const currentToken = localStorage.getItem('auth_token');
+    if (currentToken && currentToken !== this.token) {
+      this.token = currentToken;
+    }
+
     const headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -37,13 +62,27 @@ class ApiClient {
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     
-    // Don't send auth token for login/register endpoints
-    const isAuthEndpoint = endpoint === '/auth/login' || endpoint === '/auth/register';
-    const headers = isAuthEndpoint ? {
+    // Don't send auth token for login/register/password reset endpoints
+    const isAuthEndpoint = endpoint === '/auth/login' || 
+                          endpoint === '/auth/register' ||
+                          endpoint === '/auth/password/reset/request' ||
+                          endpoint === '/auth/password/reset/verify' ||
+                          endpoint === '/auth/password/reset/confirm';
+    
+    // Get base headers
+    const baseHeaders = isAuthEndpoint ? {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
     } : this.getHeaders();
+    
+    // Merge headers, but don't override Content-Type if it's explicitly set to undefined (for FormData)
+    const headers = { ...baseHeaders, ...options.headers };
+    
+    // If body is FormData, remove Content-Type to let browser set it with boundary
+    if (options.body instanceof FormData) {
+      delete headers['Content-Type'];
+    }
     
     const config = {
       headers,
@@ -52,7 +91,6 @@ class ApiClient {
     };
 
     console.log(`API Request: ${options.method || 'GET'} ${url}`);
-    console.log('Headers:', config.headers);
 
     try {
       const response = await fetch(url, config);
@@ -63,7 +101,15 @@ class ApiClient {
         data = await response.json();
       } catch (jsonError) {
         console.error('Failed to parse JSON response:', jsonError);
-        throw new Error(`Invalid JSON response: ${response.status} ${response.statusText}`);
+        
+        // If we can't parse JSON, try to get text response for debugging
+        try {
+          const textResponse = await response.text();
+          console.error('Raw response:', textResponse.substring(0, 500));
+          throw new Error(`Invalid JSON response: ${response.status} ${response.statusText}`);
+        } catch (textError) {
+          throw new Error(`Invalid response: ${response.status} ${response.statusText}`);
+        }
       }
 
       if (!response.ok) {
@@ -73,7 +119,25 @@ class ApiClient {
         if (response.status === 401) {
           console.log('401 Unauthorized - clearing token');
           this.setToken(null);
-          throw new Error('Unauthorized - token expired or invalid');
+          
+          // For API requests, throw a specific error
+          throw new Error(data.message || 'Authentication required');
+        }
+        
+        // Handle 404 Not Found specifically
+        if (response.status === 404) {
+          console.error('404 Not Found - Route does not exist or authentication failed');
+          console.error('Request URL:', url);
+          console.error('Request headers:', config.headers);
+          
+          // If this is a deposit submission, provide specific guidance
+          if (endpoint === '/deposits/submit-with-proof') {
+            console.error('🚨 Deposit submission failed with 404. Possible causes:');
+            console.error('1. User not authenticated (check localStorage for auth_token)');
+            console.error('2. Laravel server not running on port 8000');
+            console.error('3. Route not properly registered');
+            console.error('4. CORS or middleware issue');
+          }
         }
         
         // Handle other HTTP errors
@@ -86,12 +150,34 @@ class ApiClient {
     } catch (error) {
       console.error('API request failed:', error);
       
-      // Re-throw with more context
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        throw new Error('Network error - please check your connection');
+      // Ensure we always have a proper error object with a message
+      let errorToThrow;
+      
+      if (error && error.message) {
+        errorToThrow = error;
+      } else if (error && typeof error === 'string') {
+        errorToThrow = new Error(error);
+      } else if (error && error.toString) {
+        errorToThrow = new Error(error.toString());
+      } else {
+        errorToThrow = new Error('Unknown API error occurred');
       }
       
-      throw error;
+      // Add more context for network errors
+      if (error && error.name === 'TypeError' && error.message && error.message.includes('fetch')) {
+        errorToThrow = new Error('Network error - please check your connection and ensure the server is running');
+      }
+      
+      // Add debugging info
+      console.error('Error details:', {
+        originalError: error,
+        errorName: error?.name,
+        errorMessage: error?.message,
+        errorType: typeof error,
+        finalErrorMessage: errorToThrow.message
+      });
+      
+      throw errorToThrow;
     }
   }
 
@@ -101,11 +187,41 @@ class ApiClient {
   }
 
   // POST request
-  async post(endpoint, data) {
-    return this.request(endpoint, {
+  async post(endpoint, data, options = {}) {
+    const requestOptions = {
       method: 'POST',
-      body: JSON.stringify(data),
-    });
+      ...options
+    };
+
+    // Handle FormData differently from regular JSON data
+    if (data instanceof FormData) {
+      requestOptions.body = data;
+      // For FormData, don't set Content-Type - let the browser handle it
+      // This preserves other headers like Authorization
+    } else if (data) {
+      requestOptions.body = JSON.stringify(data);
+    }
+
+    // Debug logging for order approval
+    if (endpoint.includes('/approve')) {
+      console.log('🔍 Order approval debug:');
+      console.log('- Endpoint:', endpoint);
+      console.log('- Data:', data);
+      console.log('- JSON body:', JSON.stringify(data));
+      console.log('- Token exists:', !!this.token);
+      console.log('- Request options:', requestOptions);
+    }
+
+    // Debug logging for deposit submission
+    if (endpoint === '/deposits/submit-with-proof') {
+      console.log('🔍 Deposit submission debug:');
+      console.log('- Token exists:', !!this.token);
+      console.log('- Token preview:', this.token ? this.token.substring(0, 20) + '...' : 'No token');
+      console.log('- FormData keys:', data instanceof FormData ? Array.from(data.keys()) : 'Not FormData');
+      console.log('- Request options:', requestOptions);
+    }
+
+    return this.request(endpoint, requestOptions);
   }
 
   // PUT request
@@ -116,9 +232,29 @@ class ApiClient {
     });
   }
 
+  // PATCH request
+  async patch(endpoint, data) {
+    return this.request(endpoint, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
   // DELETE request
-  async delete(endpoint) {
-    return this.request(endpoint, { method: 'DELETE' });
+  async delete(endpoint, data = null) {
+    const options = { method: 'DELETE' };
+    if (data) {
+      // For DELETE requests, some servers prefer query parameters over body
+      // Try body first, but also support query parameter fallback
+      options.body = JSON.stringify(data);
+      
+      // Also add as query parameters as fallback
+      const queryParams = new URLSearchParams(data).toString();
+      if (queryParams) {
+        endpoint += (endpoint.includes('?') ? '&' : '?') + queryParams;
+      }
+    }
+    return this.request(endpoint, options);
   }
 }
 
@@ -131,7 +267,10 @@ export const authAPI = {
   login: (credentials) => apiClient.post('/auth/login', credentials),
   logout: () => apiClient.post('/auth/logout'),
   getUser: () => apiClient.get('/auth/user'),
-  requestPasswordReset: (email) => apiClient.post('/auth/password/reset', { email }),
+  
+  // Password Reset
+  requestPasswordReset: (email) => apiClient.post('/auth/password/reset/request', { email }),
+  verifyResetToken: (email, token) => apiClient.post('/auth/password/reset/verify', { email, token }),
   confirmPasswordReset: (data) => apiClient.post('/auth/password/reset/confirm', data),
   
   // Email Verification
@@ -156,8 +295,13 @@ export const authAPI = {
 // Market Data API calls
 export const marketAPI = {
   getCryptocurrencies: () => apiClient.get('/cryptocurrencies'),
+  getMarketStatistics: () => apiClient.get('/cryptocurrencies/statistics'),
   getPriceHistory: (symbol, params) => apiClient.get(`/cryptocurrencies/${symbol}/price-history?${new URLSearchParams(params)}`),
   getCandlestickData: (symbol, params) => apiClient.get(`/cryptocurrencies/${symbol}/candlestick?${new URLSearchParams(params)}`),
+  
+  // WebSocket endpoints for real-time data
+  getRealtimeMarketData: () => apiClient.get('/ws/market-data'),
+  getPriceUpdates: (symbols) => apiClient.post('/ws/price-updates', { symbols }),
 };
 
 // Wallet API calls
@@ -169,7 +313,9 @@ export const walletAPI = {
 
 // Deposit API calls
 export const depositAPI = {
-  getDeposits: (params = {}) => apiClient.get(`/deposits?${new URLSearchParams(params)}`),
+  getDeposits: (params = {}) => {
+    return apiClient.get(`/deposits?${new URLSearchParams(params)}`);
+  },
   getDeposit: (id) => apiClient.get(`/deposits/${id}`),
   generateAddress: (currency) => apiClient.post('/deposits/generate-address', { currency }),
   createFiatDeposit: (data) => apiClient.post('/deposits/fiat', data),
@@ -193,7 +339,6 @@ export const tradingAPI = {
   cancelOrder: (orderId) => apiClient.delete(`/orders/${orderId}`),
   getOrderBook: (cryptocurrency) => apiClient.get(`/orderbook/${cryptocurrency}`),
 };
-
 // Admin API calls
 export const adminAPI = {
   // Dashboard & Analytics
@@ -219,11 +364,20 @@ export const adminAPI = {
   assignTicket: (ticketId, data) => apiClient.post(`/admin/support/tickets/${ticketId}/assign`, data),
   resolveTicket: (ticketId, data) => apiClient.post(`/admin/support/tickets/${ticketId}/resolve`, data),
   
+  // Recent Transactions (Combined deposits and withdrawals)
+  getRecentTransactions: (params = {}) => apiClient.get(`/admin/recent-transactions?${new URLSearchParams(params)}`),
   // Financial Management
   getDeposits: (params = {}) => apiClient.get(`/admin/transactions/deposits?${new URLSearchParams(params)}`),
   getWithdrawals: (params = {}) => apiClient.get(`/admin/transactions/withdrawals?${new URLSearchParams(params)}`),
   approveWithdrawal: (transactionId) => apiClient.post(`/admin/transactions/withdrawals/${transactionId}/approve`),
   rejectWithdrawal: (transactionId, data) => apiClient.post(`/admin/transactions/withdrawals/${transactionId}/reject`, data),
+
+  // Deposit Approval System
+  getDepositsForApproval: (params = {}) => apiClient.get(`/admin/deposits?${new URLSearchParams(params)}`),
+  getDepositStatistics: () => apiClient.get('/admin/deposits/statistics'),
+  getDepositDetails: (depositId) => apiClient.get(`/admin/deposits/${depositId}`),
+  approveDeposit: (depositId, data = {}) => apiClient.post(`/admin/deposits/${depositId}/approve`, data),
+  rejectDeposit: (depositId, data) => apiClient.post(`/admin/deposits/${depositId}/reject`, data),
   
   // Investment & Referral Management
   getInvestments: (params = {}) => apiClient.get(`/admin/investments?${new URLSearchParams(params)}`),
@@ -233,6 +387,21 @@ export const adminAPI = {
   
   // Wallet Management
   getWallets: (params = {}) => apiClient.get(`/admin/wallets?${new URLSearchParams(params)}`),
+  
+  // Admin Wallet Management
+  getAdminWallets: () => apiClient.get('/admin/wallets'),
+  createAdminWallet: (data) => apiClient.post('/admin/wallets', data),
+  updateAdminWallet: (id, data) => apiClient.put(`/admin/wallets/${id}`, data),
+  deleteAdminWallet: (id) => apiClient.delete(`/admin/wallets/${id}`),
+  toggleWalletStatus: (id) => apiClient.put(`/admin/wallets/${id}/toggle-status`),
+  getWalletStats: () => apiClient.get('/admin/wallets/stats'),
+  validateWalletAddress: (data) => apiClient.post('/admin/wallets/validate-address', data),
+  
+  // Trading Management
+  getPendingOrders: (params = {}) => apiClient.get(`/admin/trading/pending-orders?${new URLSearchParams(params)}`),
+  getAllOrders: (params = {}) => apiClient.get(`/admin/trading/all-orders?${new URLSearchParams(params)}`),
+  getTradingStatistics: () => apiClient.get('/admin/trading/statistics'),
+  approveOrder: (orderId, data) => apiClient.post(`/admin/trading/orders/${orderId}/approve`, data),
   
   // Security & Monitoring
   getSuspiciousActivities: () => apiClient.get('/admin/suspicious-activities'),

@@ -1,244 +1,396 @@
-import { useState, useEffect } from 'react';
-import StatCard from '../components/StatCard';
-import Panel from '../components/Panel';
-import DataTable from '../components/DataTable';
+import { useState, useEffect, useCallback } from 'react';
+import { adminAPI } from '../../../utils/api';
+import "./admin/TradingTab.css"
 
 const TradingTab = ({ showToast }) => {
-  const [tradingData, setTradingData] = useState(null);
-  const [recentTrades, setRecentTrades] = useState([]);
-  const [tradingPairs, setTradingPairs] = useState([]);
+  const [activeTab, setActiveTab] = useState('pending');
+  const [pendingOrders, setPendingOrders] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
+  const [tradingStats, setTradingStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState('overview');
+  const [refreshing, setRefreshing] = useState(false);
+  const [processingOrders, setProcessingOrders] = useState(new Set());
+  const [error, setError] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(null);
+  const [filters, setFilters] = useState({
+    cryptocurrency: '',
+    side: '',
+    status: '',
+    user_id: '',
+    search: ''
+  });
 
-  useEffect(() => {
-    fetchTradingData();
-  }, []);
-
-  const fetchTradingData = async () => {
+  const fetchPendingOrders = useCallback(async () => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/admin/trading', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json'
-        }
-      });
+      console.log('⏳ Fetching pending orders with filters:', filters);
+      const data = await adminAPI.getPendingOrders(filters);
+      console.log('⏳ Pending orders response:', data);
       
-      if (response.ok) {
-        const data = await response.json();
-        setTradingData(data.trading_data || mockTradingData);
-        setRecentTrades(data.recent_trades || mockRecentTrades);
-        setTradingPairs(data.trading_pairs || mockTradingPairs);
+      if (data.success) {
+        const orders = data.orders || [];
+        console.log('✅ Successfully fetched', orders.length, 'pending orders');
+        setPendingOrders(orders);
+        
+        if (orders.length === 0 && !refreshing) {
+          console.log('ℹ️ No pending orders found');
+        }
       } else {
-        setTradingData(mockTradingData);
-        setRecentTrades(mockRecentTrades);
-        setTradingPairs(mockTradingPairs);
+        console.error('❌ API returned success=false:', data.message);
+        setPendingOrders([]);
+        throw new Error(data.message || 'Failed to fetch pending orders');
       }
     } catch (error) {
-      console.error('Failed to fetch trading data:', error);
-      setTradingData(mockTradingData);
-      setRecentTrades(mockRecentTrades);
-      setTradingPairs(mockTradingPairs);
-      showToast('info', 'Using demo data for trading management');
+      console.error('❌ Failed to fetch pending orders:', error);
+      setPendingOrders([]);
+      throw error;
+    }
+  }, [filters, refreshing]);
+
+  const fetchAllOrders = useCallback(async () => {
+    try {
+      console.log('📋 Fetching all orders with filters:', filters);
+      const data = await adminAPI.getAllOrders(filters);
+      console.log('📋 All orders response:', data);
+      
+      if (data.success) {
+        const orders = data.orders || [];
+        console.log('✅ Successfully fetched', orders.length, 'total orders');
+        setAllOrders(orders);
+      } else {
+        console.error('❌ API returned success=false:', data.message);
+        setAllOrders([]);
+        throw new Error(data.message || 'Failed to fetch all orders');
+      }
+    } catch (error) {
+      console.error('❌ Failed to fetch all orders:', error);
+      setAllOrders([]);
+      throw error;
+    }
+  }, [filters]);
+
+  const fetchTradingData = useCallback(async (silent = false) => {
+    try {
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+      } else {
+        setRefreshing(true);
+      }
+      
+      console.log('🔄 Starting fetchTradingData, activeTab:', activeTab);
+      
+      try {
+        console.log('📊 Fetching trading statistics...');
+        const statsData = await adminAPI.getTradingStatistics();
+        console.log('📊 Trading stats response:', statsData);
+        if (statsData.success) {
+          setTradingStats(statsData.stats);
+        } else {
+          console.warn('⚠️ Stats API returned success=false:', statsData.message);
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch trading stats:', error);
+      }
+
+      if (activeTab === 'pending') {
+        console.log('⏳ Fetching pending orders...');
+        await fetchPendingOrders();
+      } else {
+        console.log('📋 Fetching all orders...');
+        await fetchAllOrders();
+      }
+      
+    } catch (error) {
+      console.error('❌ Failed to fetch trading data:', error);
+      setError('Failed to load trading data. Please try again.');
+      if (!silent) {
+        showToast('error', 'Failed to load trading data');
+      }
     } finally {
       setLoading(false);
+      setRefreshing(false);
+      setLastRefresh(new Date());
     }
-  };
+  }, [activeTab, fetchPendingOrders, fetchAllOrders, showToast]);
 
-  const handlePairAction = async (pairId, action) => {
-    try {
-      const response = await fetch(`/api/admin/trading-pairs/${pairId}/${action}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json'
+  useEffect(() => {
+    console.log('TradingTab useEffect triggered, activeTab:', activeTab, 'filters:', filters);
+    fetchTradingData();
+  }, [activeTab, filters, fetchTradingData]);
+
+  useEffect(() => {
+    if (activeTab === 'pending') {
+      const interval = setInterval(() => {
+        if (processingOrders.size === 0) {
+          console.log('🔄 Auto-refresh triggered (no orders processing)');
+          fetchTradingData(true);
+        } else {
+          console.log('⏸️ Auto-refresh paused (orders being processed)');
         }
-      });
+      }, 15000); // Reduced to 15 seconds for more responsive updates
+      
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, processingOrders.size, fetchTradingData]);
 
-      if (response.ok) {
-        showToast('success', `Trading pair ${action}d successfully`);
-        fetchTradingData();
+  const handleOrderAction = async (orderId, action, reason = '') => {
+    if (processingOrders.has(orderId)) {
+      console.log('⚠️ Order', orderId, 'is already being processed');
+      showToast('warning', 'Order is already being processed');
+      return;
+    }
+
+    const currentOrders = activeTab === 'pending' ? pendingOrders : allOrders;
+    const order = currentOrders.find(o => o.id === orderId);
+    
+    if (!order) {
+      console.log('⚠️ Order', orderId, 'not found in current data');
+      showToast('error', 'Order not found. Refreshing data...');
+      await fetchTradingData(true);
+      return;
+    }
+    
+    if (order.status !== 'pending') {
+      console.log('⚠️ Order', orderId, 'is not in pending status:', order.status);
+      showToast('warning', `Order is already ${order.status}. Refreshing data...`);
+      await fetchTradingData(true);
+      return;
+    }
+
+    try {
+      console.log('🔄 Handling order action:', { orderId, action, reason, currentStatus: order.status });
+      
+      setProcessingOrders(prev => new Set([...prev, orderId]));
+      
+      // Optimistic update - immediately show processing state
+      if (activeTab === 'pending') {
+        setPendingOrders(prev => prev.map(o => 
+          o.id === orderId ? { ...o, status: 'processing' } : o
+        ));
+      }
+      
+      const requestData = { action: action };
+      
+      if (reason && reason.trim() !== '') {
+        requestData.reason = reason.trim();
+      }
+      
+      console.log('📤 Request data being sent:', requestData);
+      
+      const data = await adminAPI.approveOrder(orderId, requestData);
+      console.log('📥 Response data:', data);
+      
+      if (data.success) {
+        const message = data.message || `Order ${action}d successfully`;
+        showToast('success', message);
+        console.log('✅', message);
+        
+        // IMMEDIATE UI UPDATE - Remove from pending list and update stats
+        if (activeTab === 'pending' && (action === 'approve' || action === 'reject')) {
+          // Remove the order from pending list immediately
+          setPendingOrders(prev => prev.filter(o => o.id !== orderId));
+          
+          // Update stats immediately
+          if (tradingStats) {
+            setTradingStats(prev => ({
+              ...prev,
+              pending_orders: Math.max(0, (prev.pending_orders || 0) - 1),
+              // Update other stats based on action
+              active_orders: action === 'approve' ? (prev.active_orders || 0) + 1 : prev.active_orders,
+              rejected_orders: action === 'reject' ? (prev.rejected_orders || 0) + 1 : prev.rejected_orders
+            }));
+          }
+        }
+        
+        // Also update the all orders list if we're viewing it
+        if (activeTab === 'all') {
+          setAllOrders(prev => prev.map(o => 
+            o.id === orderId ? {
+              ...o, 
+              status: action === 'approve' ? 'active' : 'rejected',
+              approved_by: data.order?.approved_by,
+              approved_at: data.order?.approved_at,
+              admin_notes: data.order?.admin_notes
+            } : o
+          ));
+        }
+        
+        // Refresh data in background to ensure consistency (but don't wait for it)
+        setTimeout(() => fetchTradingData(true), 2000);
+        
+      } else {
+        const errorMessage = data.message || 'Failed to process order';
+        showToast('error', errorMessage);
+        console.error('❌', errorMessage);
+        
+        // Revert optimistic update
+        if (activeTab === 'pending') {
+          setPendingOrders(prev => prev.map(o => 
+            o.id === orderId ? { ...o, status: 'pending' } : o
+          ));
+        }
       }
     } catch (error) {
-      console.error(`Failed to ${action} trading pair:`, error);
-      showToast('success', `Trading pair ${action}d successfully (demo)`);
+      console.error('❌ Failed to process order:', error);
+      
+      // Revert optimistic update
+      if (activeTab === 'pending') {
+        setPendingOrders(prev => prev.map(o => 
+          o.id === orderId ? { ...o, status: 'pending' } : o
+        ));
+      }
+      
+      if (error.response) {
+        console.error('📊 Response status:', error.response.status);
+        console.error('📊 Response data:', error.response.data);
+      }
+      
+      let errorMessage = 'Failed to process order';
+      if (error.response?.status === 400) {
+        const responseMessage = error.response?.data?.message || '';
+        if (responseMessage.includes('not in pending status')) {
+          errorMessage = 'Order has already been processed. Refreshing data...';
+          setTimeout(() => fetchTradingData(true), 500);
+        } else {
+          errorMessage = responseMessage || errorMessage;
+        }
+      } else {
+        errorMessage = error.response?.data?.message || error.message || errorMessage;
+      }
+      
+      showToast('error', errorMessage);
+    } finally {
+      setProcessingOrders(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(orderId);
+        return newSet;
+      });
     }
   };
 
-  const tradingStats = [
-    {
-      icon: '💱',
-      label: '24h Trading Volume',
-      value: '$8.4M',
-      change: '▲ +12.4% from yesterday',
-      type: 'cyan',
-      changeType: 'up'
-    },
-    {
-      icon: '📊',
-      label: 'Active Trading Pairs',
-      value: '24',
-      change: '2 pairs added this week',
-      type: 'green',
-      changeType: 'up'
-    },
-    {
-      icon: '⚡',
-      label: 'Total Trades Today',
-      value: '18,420',
-      change: '▲ +2,140 from yesterday',
-      type: 'yellow',
-      changeType: 'up'
-    },
-    {
-      icon: '💰',
-      label: 'Trading Fees Earned',
-      value: '$42.1K',
-      change: '▲ +8.7% increase',
-      type: 'blue',
-      changeType: 'up'
+  const handleFilterChange = (key, value) => {
+    console.log('🔍 Filter changed:', key, '=', value);
+    setFilters(prev => ({ 
+      ...prev, 
+      [key]: value || ''
+    }));
+  };
+
+  const handleClearFilters = () => {
+    console.log('🧹 Clearing all filters');
+    setFilters({
+      cryptocurrency: '',
+      side: '',
+      status: '',
+      user_id: '',
+      search: ''
+    });
+  };
+
+  const handleRefresh = () => {
+    console.log('🔄 Manual refresh triggered');
+    fetchTradingData();
+  };
+
+  const handleRejectOrder = (orderId) => {
+    const reason = prompt(
+      'Please provide a reason for rejecting this order:\n\n' +
+      'This will be visible to the user and cannot be undone.'
+    );
+    
+    if (reason && reason.trim()) {
+      handleOrderAction(orderId, 'reject', reason.trim());
+    } else if (reason === '') {
+      showToast('warning', 'Rejection reason is required');
     }
-  ];
+  };
 
-  const recentTradesColumns = [
-    { key: 'user', label: 'Trader' },
-    { key: 'pair', label: 'Pair' },
-    { key: 'type', label: 'Type' },
-    { key: 'amount', label: 'Amount' },
-    { key: 'price', label: 'Price' },
-    { key: 'total', label: 'Total' },
-    { key: 'time', label: 'Time' },
-    { key: 'status', label: 'Status' }
-  ];
+  const handleApproveOrder = (orderId) => {
+    if (window.confirm('Are you sure you want to approve this order? This action cannot be undone.')) {
+      handleOrderAction(orderId, 'approve');
+    }
+  };
 
-  const formatRecentTradeRow = (trade, index) => ({
-    user: (
-      <div className="user-chip">
-        <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{color: 'var(--bg-primary)', width: '20px', height: '20px', fontSize: '8px'}}>
-          {trade.user?.split(' ').map(n => n[0]).join('') || 'U'}
-        </div>
-        <span style={{fontSize: '12px'}}>{trade.user}</span>
-      </div>
-    ),
-    pair: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent-cyan)'}}>
-        {trade.pair}
-      </span>
-    ),
-    type: (
-      <span className={`badge ${trade.type.toLowerCase()}`}>
-        {trade.type}
-      </span>
-    ),
-    amount: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px'}}>
-        {trade.amount}
-      </span>
-    ),
-    price: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-tertiary)'}}>
-        ${trade.price.toLocaleString()}
-      </span>
-    ),
-    total: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent-green)'}}>
-        ${trade.total.toLocaleString()}
-      </span>
-    ),
-    time: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-tertiary)'}}>
-        {trade.time}
-      </span>
-    ),
-    status: (
-      <span className={`badge ${trade.status}`}>
-        {trade.status.toUpperCase()}
-      </span>
-    )
-  });
+  const formatCurrency = (amount) => {
+    if (!amount || isNaN(amount)) return '$0.00';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  };
 
-  const tradingPairsColumns = [
-    { key: 'pair', label: 'Trading Pair' },
-    { key: 'volume24h', label: '24h Volume' },
-    { key: 'price', label: 'Last Price' },
-    { key: 'change24h', label: '24h Change' },
-    { key: 'trades', label: 'Trades' },
-    { key: 'fee', label: 'Trading Fee' },
-    { key: 'status', label: 'Status' },
-    { key: 'actions', label: 'Actions' }
-  ];
+  const formatCrypto = (amount, symbol) => {
+    if (!amount || isNaN(amount)) return `0.00000000 ${symbol || ''}`;
+    return `${parseFloat(amount).toFixed(8)} ${symbol || ''}`;
+  };
 
-  const formatTradingPairRow = (pair, index) => ({
-    pair: (
-      <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-        <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{width: '20px', height: '20px', fontSize: '8px'}}>
-          {pair.base_currency[0]}
-        </div>
-        <div>
-          <div style={{fontSize: '12px', fontWeight: '500'}}>{pair.symbol}</div>
-          <div style={{fontSize: '10px', color: 'var(--text-tertiary)'}}>{pair.base_currency}/{pair.quote_currency}</div>
-        </div>
-      </div>
-    ),
-    volume24h: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent-cyan)'}}>
-        ${pair.volume_24h.toLocaleString()}
-      </span>
-    ),
-    price: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px'}}>
-        ${pair.last_price.toLocaleString()}
-      </span>
-    ),
-    change24h: (
-      <span 
-        style={{
-          fontFamily: 'var(--mono)', 
-          fontSize: '11px',
-          color: pair.change_24h >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'
-        }}
-      >
-        {pair.change_24h >= 0 ? '+' : ''}{pair.change_24h}%
-      </span>
-    ),
-    trades: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-tertiary)'}}>
-        {pair.trades_24h.toLocaleString()}
-      </span>
-    ),
-    fee: (
-      <span style={{fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--accent-yellow)'}}>
-        {pair.trading_fee}%
-      </span>
-    ),
-    status: (
-      <span className={`badge ${pair.status}`}>
-        {pair.status.toUpperCase()}
-      </span>
-    ),
-    actions: (
-      <div className="actions-cell">
-        <button 
-          className="action-btn view"
-          onClick={() => showToast('info', 'Pair settings modal coming soon')}
-        >
-          Settings
-        </button>
-        <button 
-          className={`action-btn ${pair.status === 'active' ? 'suspend' : 'approve'}`}
-          onClick={() => handlePairAction(pair.id, pair.status === 'active' ? 'disable' : 'enable')}
-        >
-          {pair.status === 'active' ? 'Disable' : 'Enable'}
-        </button>
-      </div>
-    )
-  });
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch {
+      return 'Invalid Date';
+    }
+  };
+
+  const formatTime = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch {
+      return 'Invalid Time';
+    }
+  };
 
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Loading trading data...</p>
+      <div className="page active">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading trading data...</p>
+          {error && (
+            <div className="error-message" style={{ marginTop: '1rem', color: 'var(--accent-red)' }}>
+              {error}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !loading) {
+    return (
+      <div className="page active">
+        <div className="error-container" style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          padding: '80px 20px',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.5 }}>⚠️</div>
+          <h3 style={{ color: 'var(--accent-red)', marginBottom: '0.5rem' }}>Error Loading Data</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>{error}</p>
+          <button 
+            className="btn btn-primary"
+            onClick={handleRefresh}
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
@@ -247,279 +399,321 @@ const TradingTab = ({ showToast }) => {
     <div className="page active">
       <div className="page-header">
         <div>
-          <div className="page-title">Trading Management</div>
-          <div className="page-sub">Monitor trading activity and manage trading pairs</div>
+          <h1 className="page-title">Trade Management</h1>
+          <p className="page-sub">Manage and approve user trading orders</p>
         </div>
         <div className="page-actions">
           <button 
-            className="btn btn-outline btn-sm"
-            onClick={() => showToast('info', 'Trading report export coming soon')}
+            className="btn btn-outline"
+            onClick={handleRefresh}
+            disabled={loading || refreshing}
+            style={{ position: 'relative' }}
           >
-            📊 Export Report
+            {refreshing ? (
+              <>
+                <span className="loading-spinner" style={{ 
+                  width: '14px', 
+                  height: '14px', 
+                  marginRight: '8px',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderTop: '2px solid currentColor'
+                }}></span>
+                Refreshing...
+              </>
+            ) : (
+              'Refresh'
+            )}
           </button>
+          <div className="btn-group">
+            <button 
+              className={`btn ${activeTab === 'pending' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setActiveTab('pending')}
+            >
+              Pending ({tradingStats?.pending_orders || 0})
+            </button>
+            <button 
+              className={`btn ${activeTab === 'all' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setActiveTab('all')}
+            >
+              All Orders
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {tradingStats && (
+        <div className="cards-grid">
+          <div className="stat-card" data-accent="yellow">
+            <div className="sc-icon yellow">⏳</div>
+            <div className="sc-label">Pending Orders</div>
+            <div className="sc-value">{tradingStats.pending_orders || 0}</div>
+            <div className="sc-change">Awaiting approval</div>
+          </div>
+
+          <div className="stat-card" data-accent="green">
+            <div className="sc-icon green">🔄</div>
+            <div className="sc-label">Active Orders</div>
+            <div className="sc-value">{tradingStats.active_orders || 0}</div>
+            <div className="sc-change">Currently trading</div>
+          </div>
+
+          <div className="stat-card" data-accent="blue">
+            <div className="sc-icon blue">✅</div>
+            <div className="sc-label">Completed Orders</div>
+            <div className="sc-value">{tradingStats.completed_orders || 0}</div>
+            <div className="sc-change">Successfully filled</div>
+          </div>
+
+          <div className="stat-card" data-accent="purple">
+            <div className="sc-icon purple">📊</div>
+            <div className="sc-label">24H Volume</div>
+            <div className="sc-value">{formatCurrency(tradingStats.total_volume_24h || 0)}</div>
+            <div className="sc-change">{tradingStats.daily_trades || 0} trades today</div>
+          </div>
+        </div>
+      )}
+
+      <div className="panel">
+        <div className="panel-header">
+          <h3>Filter Orders</h3>
           <button 
-            className="btn btn-primary btn-sm"
-            onClick={() => showToast('info', 'Add trading pair modal coming soon')}
+            className="btn btn-outline btn-sm"
+            onClick={handleClearFilters}
           >
-            ➕ Add Pair
+            Clear All
           </button>
         </div>
-      </div>
+        <div className="panel-body">
+          <div className="filter-bar">
+            <div className="form-group">
+              <label>Cryptocurrency</label>
+              <select 
+                value={filters.cryptocurrency} 
+                onChange={(e) => handleFilterChange('cryptocurrency', e.target.value)}
+                className="form-input"
+              >
+                <option value="">All Cryptocurrencies</option>
+                <option value="BTC">Bitcoin (BTC)</option>
+                <option value="ETH">Ethereum (ETH)</option>
+                <option value="USDT">Tether (USDT)</option>
+                <option value="SOL">Solana (SOL)</option>
+                <option value="ADA">Cardano (ADA)</option>
+                <option value="DOT">Polkadot (DOT)</option>
+              </select>
+            </div>
 
-      {/* Trading Stats */}
-      <div className="cards-grid">
-        {tradingStats.map((stat, index) => (
-          <StatCard key={index} {...stat} />
-        ))}
-      </div>
+            <div className="form-group">
+              <label>Order Side</label>
+              <select 
+                value={filters.side} 
+                onChange={(e) => handleFilterChange('side', e.target.value)}
+                className="form-input"
+              >
+                <option value="">All Sides</option>
+                <option value="buy">Buy Orders</option>
+                <option value="sell">Sell Orders</option>
+              </select>
+            </div>
 
-      {/* View Toggle */}
-      <div className="filter-bar">
-        <button 
-          className={`filter-chip ${activeView === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveView('overview')}
-        >
-          Trading Overview
-        </button>
-        <button 
-          className={`filter-chip ${activeView === 'pairs' ? 'active' : ''}`}
-          onClick={() => setActiveView('pairs')}
-        >
-          Trading Pairs
-        </button>
-        <button 
-          className={`filter-chip ${activeView === 'trades' ? 'active' : ''}`}
-          onClick={() => setActiveView('trades')}
-        >
-          Recent Trades
-        </button>
-      </div>
-
-      {activeView === 'overview' && (
-        <div className="grid-2">
-          <Panel title="Trading Volume Chart">
-            <div className="chart-wrap" style={{height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)'}}>
-              <div style={{textAlign: 'center'}}>
-                <div style={{fontSize: '48px', marginBottom: '10px'}}>📈</div>
-                <div>24h Trading Volume Chart</div>
-                <div style={{fontSize: '12px', marginTop: '5px'}}>Real-time volume tracking across all pairs</div>
+            {activeTab === 'all' && (
+              <div className="form-group">
+                <label>Order Status</label>
+                <select 
+                  value={filters.status} 
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                  className="form-input"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="active">Active</option>
+                  <option value="filled">Filled</option>
+                  <option value="partial">Partial</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="rejected">Rejected</option>
+                </select>
               </div>
-            </div>
-          </Panel>
+            )}
 
-          <Panel title="Top Performers">
-            <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-              {tradingPairs.slice(0, 5).map((pair, index) => (
-                <div key={pair.id} className="performer-item">
-                  <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
-                    <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{width: '20px', height: '20px', fontSize: '8px'}}>
-                      {pair.base_currency[0]}
-                    </div>
-                    <div>
-                      <div style={{fontSize: '12px', fontWeight: '500'}}>{pair.symbol}</div>
-                      <div style={{fontSize: '10px', color: 'var(--text-tertiary)'}}>${pair.volume_24h.toLocaleString()} vol</div>
-                    </div>
-                  </div>
-                  <div style={{textAlign: 'right'}}>
-                    <div style={{fontSize: '12px', color: pair.change_24h >= 0 ? 'var(--accent-green)' : 'var(--accent-red)', fontFamily: 'var(--mono)'}}>
-                      {pair.change_24h >= 0 ? '+' : ''}{pair.change_24h}%
-                    </div>
-                    <div style={{fontSize: '10px', color: 'var(--text-tertiary)', fontFamily: 'var(--mono)'}}>
-                      ${pair.last_price.toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="form-group">
+              <label>User ID</label>
+              <input
+                type="text"
+                value={filters.user_id}
+                onChange={(e) => handleFilterChange('user_id', e.target.value)}
+                placeholder="Enter user ID..."
+                className="form-input"
+              />
             </div>
-          </Panel>
+          </div>
         </div>
-      )}
+      </div>
 
-      {activeView === 'pairs' && (
-        <Panel title="Trading Pairs Management">
-          <DataTable
-            columns={tradingPairsColumns}
-            data={tradingPairs.map(formatTradingPairRow)}
-          />
-        </Panel>
-      )}
-
-      {activeView === 'trades' && (
-        <Panel title="Recent Trades">
-          <DataTable
-            columns={recentTradesColumns}
-            data={recentTrades.map(formatRecentTradeRow)}
-          />
-          <div className="pagination">
-            <div className="page-info">
-              Showing 1–{Math.min(15, recentTrades.length)} of {recentTrades.length} trades
-            </div>
-            <div className="page-btns">
-              <button className="page-btn">«</button>
-              <button className="page-btn active">1</button>
-              <button className="page-btn">2</button>
-              <button className="page-btn">»</button>
-            </div>
+      <div className="panel">
+        <div className="panel-header">
+          <h3>{activeTab === 'pending' ? 'Pending Orders' : 'All Orders'}</h3>
+          <div className="panel-meta">
+            <span>{(activeTab === 'pending' ? pendingOrders : allOrders).length} orders</span>
+            <span style={{ 
+              marginLeft: '1rem', 
+              fontSize: '0.75rem', 
+              color: 'var(--accent-green)',
+              fontWeight: '600'
+            }}>
+              🟢 REAL DATA
+            </span>
+            {lastRefresh && (
+              <span style={{ 
+                marginLeft: '1rem', 
+                fontSize: '0.75rem', 
+                color: 'var(--text-tertiary)',
+                fontFamily: 'var(--mono)'
+              }}>
+                Last updated: {lastRefresh.toLocaleTimeString()}
+              </span>
+            )}
           </div>
-        </Panel>
-      )}
-
-      {/* Trading Engine Status */}
-      <div className="grid-3-1" style={{marginTop: '20px'}}>
-        <Panel title="Trading Engine Status">
-          <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
-            <div className="status-row">
-              <span style={{fontSize: '12px'}}>Order Matching Engine</span>
-              <span style={{fontSize: '12px', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '4px'}}>
-                <span className="online-dot"></span> ONLINE
-              </span>
+        </div>
+        <div className="panel-body">
+          {(activeTab === 'pending' ? pendingOrders : allOrders).length === 0 ? (
+            <div className="text-center" style={{ padding: '40px' }}>
+              <p style={{ color: 'var(--text-secondary)' }}>
+                No {activeTab === 'pending' ? 'pending' : ''} orders found.
+              </p>
             </div>
-            <div className="status-row">
-              <span style={{fontSize: '12px'}}>Price Feed</span>
-              <span style={{fontSize: '12px', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '4px'}}>
-                <span className="online-dot"></span> ACTIVE
-              </span>
+          ) : (
+            <div className="data-table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>User</th>
+                    <th>Trading Pair</th>
+                    <th>Side</th>
+                    <th>Type</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total Value</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    {activeTab === 'pending' && <th>Actions</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const orders = activeTab === 'pending' ? pendingOrders : allOrders;
+                    
+                    return orders.map((order) => {
+                      const totalValue = parseFloat(order.quantity) * parseFloat(order.price);
+                      
+                      return (
+                        <tr key={order.id}>
+                          <td>
+                            <span style={{ fontFamily: 'var(--mono)', color: 'var(--accent-cyan)' }}>
+                              #{order.id}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="user-cell">
+                              <div className="user-avatar">
+                                {order.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                              </div>
+                              <div>
+                                <div className="user-name">{order.user?.name || 'Unknown'}</div>
+                                <div className="user-email">{order.user?.email || ''}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <span style={{ fontFamily: 'var(--mono)', fontWeight: '600' }}>
+                              {order.cryptocurrency_symbol}/{order.payment_currency || 'USD'}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`badge ${order.side === 'buy' ? 'active' : 'suspended'}`}>
+                              {order.side.toUpperCase()}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="badge" style={{ 
+                              background: 'var(--bg-tertiary)', 
+                              color: 'var(--text-secondary)',
+                              border: '1px solid var(--border-primary)'
+                            }}>
+                              {order.order_type.toUpperCase()}
+                            </span>
+                          </td>
+                          <td>
+                            <span style={{ fontFamily: 'var(--mono)' }}>
+                              {formatCrypto(order.quantity, order.cryptocurrency_symbol)}
+                            </span>
+                          </td>
+                          <td>
+                            <span style={{ fontFamily: 'var(--mono)' }}>
+                              {formatCurrency(order.price)}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={totalValue >= 0 ? 'amount-positive' : 'amount-negative'}>
+                              {formatCurrency(totalValue)}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`badge ${
+                              processingOrders.has(order.id) ? 'processing' : order.status
+                            }`}>
+                              {processingOrders.has(order.id) ? 'PROCESSING' : order.status.toUpperCase()}
+                            </span>
+                          </td>
+                          <td>
+                            <div>
+                              <div className="date-cell">
+                                {formatDate(order.created_at)}
+                              </div>
+                              <div className="time-cell">
+                                {formatTime(order.created_at)}
+                              </div>
+                            </div>
+                          </td>
+                          {activeTab === 'pending' && (
+                            <td>
+                              <div className="actions-cell">
+                                <button 
+                                  className="action-btn approve"
+                                  onClick={() => handleApproveOrder(order.id)}
+                                  disabled={processingOrders.has(order.id)}
+                                  style={{ 
+                                    opacity: processingOrders.has(order.id) ? 0.6 : 1,
+                                    cursor: processingOrders.has(order.id) ? 'not-allowed' : 'pointer'
+                                  }}
+                                >
+                                  {processingOrders.has(order.id) ? 'Processing...' : 'Approve'}
+                                </button>
+                                <button 
+                                  className="action-btn reject"
+                                  onClick={() => handleRejectOrder(order.id)}
+                                  disabled={processingOrders.has(order.id)}
+                                  style={{ 
+                                    opacity: processingOrders.has(order.id) ? 0.6 : 1,
+                                    cursor: processingOrders.has(order.id) ? 'not-allowed' : 'pointer'
+                                  }}
+                                >
+                                  {processingOrders.has(order.id) ? 'Processing...' : 'Reject'}
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    });
+                  })()}
+                </tbody>
+              </table>
             </div>
-            <div className="status-row">
-              <span style={{fontSize: '12px'}}>Order Book Depth</span>
-              <span style={{fontSize: '12px', color: 'var(--accent-cyan)', fontFamily: 'var(--mono)'}}>
-                Avg 98.4%
-              </span>
-            </div>
-            <div className="status-row">
-              <span style={{fontSize: '12px'}}>Latency</span>
-              <span style={{fontSize: '12px', color: 'var(--accent-green)', fontFamily: 'var(--mono)'}}>
-                {'< 50ms'}
-              </span>
-            </div>
-            <button 
-              className="btn btn-outline"
-              style={{width: '100%', marginTop: '8px'}}
-              onClick={() => showToast('info', 'Engine settings modal coming soon')}
-            >
-              ⚙️ Engine Settings
-            </button>
-          </div>
-        </Panel>
-
-        <Panel title="Quick Actions">
-          <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
-            <button 
-              className="btn btn-outline"
-              style={{width: '100%', justifyContent: 'flex-start', gap: '10px'}}
-              onClick={() => showToast('info', 'Halt trading modal coming soon')}
-            >
-              ⏸️ Emergency Halt Trading
-            </button>
-            <button 
-              className="btn btn-outline"
-              style={{width: '100%', justifyContent: 'flex-start', gap: '10px'}}
-              onClick={() => showToast('info', 'Maintenance mode modal coming soon')}
-            >
-              🔧 Enable Maintenance Mode
-            </button>
-            <button 
-              className="btn btn-outline"
-              style={{width: '100%', justifyContent: 'flex-start', gap: '10px'}}
-              onClick={() => showToast('info', 'Clear order book modal coming soon')}
-            >
-              🗑️ Clear Order Books
-            </button>
-            <button 
-              className="btn btn-outline"
-              style={{width: '100%', justifyContent: 'flex-start', gap: '10px'}}
-              onClick={() => showToast('info', 'System diagnostics coming soon')}
-            >
-              🔍 Run Diagnostics
-            </button>
-          </div>
-        </Panel>
+          )}
+        </div>
       </div>
     </div>
   );
 };
-
-// Mock data
-const mockTradingData = {
-  volume_24h: 8400000,
-  active_pairs: 24,
-  trades_today: 18420,
-  fees_earned: 42100
-};
-
-const mockRecentTrades = [
-  {
-    id: 1,
-    user: 'John Doe',
-    pair: 'BTC/USDT',
-    type: 'BUY',
-    amount: '0.5 BTC',
-    price: 67800,
-    total: 33900,
-    time: '14:30:25',
-    status: 'completed'
-  },
-  {
-    id: 2,
-    user: 'Sarah Miller',
-    pair: 'ETH/USDT',
-    type: 'SELL',
-    amount: '2.5 ETH',
-    price: 3540,
-    total: 8850,
-    time: '14:29:18',
-    status: 'completed'
-  },
-  {
-    id: 3,
-    user: 'Alex Kumar',
-    pair: 'SOL/USDT',
-    type: 'BUY',
-    amount: '50 SOL',
-    price: 172,
-    total: 8600,
-    time: '14:28:42',
-    status: 'completed'
-  }
-];
-
-const mockTradingPairs = [
-  {
-    id: 1,
-    symbol: 'BTC/USDT',
-    base_currency: 'BTC',
-    quote_currency: 'USDT',
-    volume_24h: 4200000,
-    last_price: 67800,
-    change_24h: 2.4,
-    trades_24h: 8420,
-    trading_fee: 0.1,
-    status: 'active'
-  },
-  {
-    id: 2,
-    symbol: 'ETH/USDT',
-    base_currency: 'ETH',
-    quote_currency: 'USDT',
-    volume_24h: 2800000,
-    last_price: 3540,
-    change_24h: -1.2,
-    trades_24h: 5240,
-    trading_fee: 0.1,
-    status: 'active'
-  },
-  {
-    id: 3,
-    symbol: 'SOL/USDT',
-    base_currency: 'SOL',
-    quote_currency: 'USDT',
-    volume_24h: 1900000,
-    last_price: 172,
-    change_24h: 5.8,
-    trades_24h: 3420,
-    trading_fee: 0.15,
-    status: 'active'
-  }
-];
 
 export default TradingTab;

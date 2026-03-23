@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../utils/api';
 import apiClient from '../utils/api';
-import { triggerOAuthSuccess } from '../utils/forceRedirect';
 
 // Create context with default value
 const AuthContext = createContext({
@@ -17,7 +16,8 @@ const AuthContext = createContext({
   fetchUser: () => {},
 });
 
-export const useAuth = () => {
+// Custom hook to use auth context
+const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
     console.error('useAuth called outside of AuthProvider');
@@ -26,7 +26,8 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {
+// Auth Provider Component
+const AuthProvider = ({ children }) => {
   console.log('AuthProvider rendering...'); // Debug log
   
   const [user, setUser] = useState(null);
@@ -37,7 +38,26 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     console.log('AuthProvider useEffect running...'); // Debug log
     initializeAuth();
+    
+    // Set up token expiration check
+    const tokenCheckInterval = setInterval(() => {
+      checkTokenExpiration();
+    }, 60000); // Check every minute
+    
+    return () => clearInterval(tokenCheckInterval);
   }, []);
+
+  const checkTokenExpiration = () => {
+    const token = localStorage.getItem('auth_token');
+    if (token && isAuthenticated) {
+      // Decode token to check expiration (if using JWT)
+      // For Sanctum, we can make a lightweight API call
+      fetchUser().catch(() => {
+        console.log('Token expired, clearing auth');
+        clearAuth();
+      });
+    }
+  };
 
   const initializeAuth = async () => {
     try {
@@ -121,11 +141,14 @@ export const AuthProvider = ({ children }) => {
       
       if (response && response.success && response.token && response.user) {
         console.log('Login successful, setting auth state');
+        console.log('User data from login:', response.user);
+        console.log('User is_admin value:', response.user.is_admin);
         apiClient.setToken(response.token);
         localStorage.setItem('auth_token', response.token);
         setUser(response.user);
         setIsAuthenticated(true);
         console.log('User set in context:', response.user);
+        console.log('isAdmin calculated as:', Boolean(response.user?.is_admin));
         return { success: true, user: response.user };
       } else {
         console.log('Login failed:', response?.message);
@@ -133,6 +156,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Login error:', error);
+      // Ensure we always return a proper response object
       return { success: false, message: error.message || 'Login failed' };
     }
   };
@@ -245,7 +269,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     isAuthenticated,
-    isAdmin: user?.is_admin || false,
+    isAdmin: Boolean(user?.is_admin),
     login,
     register,
     logout,
@@ -265,3 +289,6 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+// Export both as named exports
+export { AuthProvider, useAuth };

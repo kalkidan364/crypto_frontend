@@ -255,7 +255,7 @@ const History = () => {
   };
 
   return (
-    <main className="main-content">
+    <>
       <div className="history-container">
         <div className="page-header">
           <div className="ph-left">
@@ -737,7 +737,7 @@ const History = () => {
           </div>
         </div>
       </div>
-    </main>
+    </>
   );
 };
 

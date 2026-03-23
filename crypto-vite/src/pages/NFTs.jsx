@@ -113,7 +113,7 @@ const NFTs = () => {
   });
 
   return (
-    <main className="main-content">
+    <>
       <div className="nfts-header">
         <div>
           <h1 className="page-title">NFT Marketplace</h1>
@@ -208,7 +208,7 @@ const NFTs = () => {
           ))}
         </div>
       )}
-    </main>
+    </>
   );
 };
 

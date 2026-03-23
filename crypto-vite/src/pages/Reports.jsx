@@ -318,7 +318,7 @@ const Reports = () => {
   }, []);
 
   return (
-    <>
+    <div className="reports-page">
       {/* Toast Notification */}
       <div className={`toast ${toastVisible ? 'show' : ''}`}>
         <div className="toast-icon">{toastData.icon}</div>
@@ -328,7 +328,7 @@ const Reports = () => {
         </div>
       </div>
 
-      <main className="main">
+      <div className="reports-content">
         <div className="page-head fu" style={{ animationDelay: '0s' }}>
           <div>
             <div className="pht">// Performance Reports</div>
@@ -422,8 +422,8 @@ const Reports = () => {
             <div id="calBody"></div>
           </div>
         </div>
-      </main>
-    </>
+      </div>
+    </div>
   );
 };
 

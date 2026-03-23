@@ -5,7 +5,7 @@ import { initiateOAuthFlow } from '../utils/oauthHandler';
 import { forceRedirectDebug } from '../utils/debugOAuth';
 import OAuthCallbackHandler from '../components/auth/OAuthCallbackHandler';
 import OtpVerification from '../components/auth/OtpVerification';
-import '../styles/components/login.css';
+import '../styles/auth/login.css';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -120,6 +120,11 @@ const Register = () => {
       }
     } catch (error) {
       console.error('Failed to load OAuth providers:', error);
+      // Fallback: Enable OAuth providers by default if backend is not available
+      setOauthProviders({
+        google: { enabled: true, name: 'Google', icon: 'google' },
+        apple: { enabled: true, name: 'Apple', icon: 'apple' }
+      });
     }
   };
 
@@ -293,10 +298,23 @@ const Register = () => {
   const handleOAuthLogin = async (provider) => {
     try {
       setIsLoading(true);
+      
+      // Check if backend is available first
+      try {
+        const testResponse = await fetch('http://127.0.0.1:8000/api/auth/providers');
+        if (!testResponse.ok) {
+          throw new Error('Backend server not available');
+        }
+      } catch (error) {
+        showToast('error', 'Backend server is not running. Please start the Laravel server first.');
+        setIsLoading(false);
+        return;
+      }
+      
       await initiateOAuthFlow(provider, window.location.origin + '/register');
     } catch (error) {
       console.error(`${provider} OAuth error:`, error);
-      showToast('error', `Failed to connect to ${provider}`);
+      showToast('error', `Failed to connect to ${provider}: ${error.message}`);
       setIsLoading(false);
     }
   };

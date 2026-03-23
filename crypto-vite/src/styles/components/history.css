@@ -35,12 +35,18 @@
   padding: 22px 24px;
 }
 
-.history-container {
-  max-width: 1600px;
-  margin: 0 auto;
+.history-container,
+.orders-page {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
+  padding: 24px 32px !important; /* Override global styles */
+  min-height: calc(100vh - 60px);
+  background: var(--ink);
+  box-sizing: border-box;
 }
 
 /* Page Header */

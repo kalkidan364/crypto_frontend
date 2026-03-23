@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import apiClient from '../utils/api';
+import { useState, useEffect, useCallback } from 'react';
+import { walletAPI, apiClient } from '../utils/api';
 
 export const useWalletData = () => {
   const [wallets, setWallets] = useState([]);
@@ -7,34 +7,47 @@ export const useWalletData = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchWalletData = async () => {
+  const fetchWalletData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await apiClient.get('/wallets');
+      // Check authentication first
+      if (!apiClient.isAuthenticated()) {
+        setError('Please log in to view your portfolio');
+        setWallets([]);
+        setPortfolio(null);
+        return;
+      }
       
-      if (response.success) {
-        setWallets(response.wallets);
-        setPortfolio(response.portfolio);
+      const response = await walletAPI.getWallets();
+      
+      if (response && response.success) {
+        setWallets(response.wallets || []);
+        setPortfolio(response.portfolio || null);
       } else {
-        setError('Failed to fetch wallet data');
+        setError(response?.message || 'Failed to fetch wallet data');
       }
     } catch (err) {
       console.error('Error fetching wallet data:', err);
-      setError(err.response?.data?.message || 'Failed to fetch wallet data');
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to fetch wallet data';
+      
+      // Don't show authentication errors as they're handled elsewhere
+      if (!errorMessage.includes('Unauthorized') && !errorMessage.includes('Authentication required')) {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchWalletData();
-  }, []);
+  }, [fetchWalletData]);
 
-  const refreshWalletData = () => {
+  const refreshWalletData = useCallback(() => {
     fetchWalletData();
-  };
+  }, [fetchWalletData]);
   
   return {
     wallets,

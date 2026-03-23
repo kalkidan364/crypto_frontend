@@ -1,0 +1,173 @@
+/* Professional Email Verification Screen */
+.verification-required-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.verification-overlay {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.verification-container {
+  padding: 40px;
+  text-align: center;
+}
+
+.verification-header {
+  margin-bottom: 30px;
+}
+
+.nexus-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.nexus-logo .logo-mark {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.nexus-logo .logo-text {
+  font-size: 28px;
+  font-weight: bold;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.verification-header h2 {
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+.verification-header p {
+  color: #b0b0b0;
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.verification-footer {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.verification-footer p {
+  color: #888;
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Loading Screen Enhancements */
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  text-align: center;
+  color: #ffffff;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+.loading-spinner p {
+  font-size: 16px;
+  color: #b0b0b0;
+  margin: 0;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .verification-container {
+    padding: 30px 20px;
+  }
+  
+  .verification-header h2 {
+    font-size: 20px;
+  }
+  
+  .verification-header p {
+    font-size: 14px;
+  }
+  
+  .nexus-logo .logo-mark {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  
+  .nexus-logo .logo-text {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .verification-required-screen {
+    padding: 10px;
+  }
+  
+  .verification-container {
+    padding: 25px 15px;
+  }
+  
+  .verification-overlay {
+    border-radius: 15px;
+  }
+}

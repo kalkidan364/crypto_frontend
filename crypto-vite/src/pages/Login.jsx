@@ -8,8 +8,8 @@ import { debugOAuthFlow, forceRedirectDebug, monitorAuthState } from '../utils/d
 import OAuthCallbackHandler from '../components/auth/OAuthCallbackHandler';
 import TwoFactorVerification from '../components/auth/TwoFactorVerification';
 import OtpVerification from '../components/auth/OtpVerification';
-import '../styles/components/login.css';
-import '../styles/components/security.css';
+import '../styles/auth/login.css';
+import '../styles/auth/security.css';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -132,12 +132,30 @@ const Login = () => {
   const fetchOAuthProviders = async () => {
     try {
       const response = await fetch('http://127.0.0.1:8000/api/auth/providers');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
       if (data.success) {
         setOauthProviders(data.providers);
+      } else {
+        throw new Error(data.message || 'Failed to load providers');
       }
     } catch (error) {
       console.error('Failed to load OAuth providers:', error);
+      
+      // Fallback: Disable OAuth providers if backend is not available
+      setOauthProviders({
+        google: { enabled: false, name: 'Google', icon: 'google' },
+        apple: { enabled: false, name: 'Apple', icon: 'apple' }
+      });
+      
+      // Only show error if it's not a network connectivity issue
+      if (!error.message.includes('Failed to fetch')) {
+        console.warn('OAuth providers disabled due to backend error:', error.message);
+      }
     }
   };
 
@@ -181,6 +199,13 @@ const Login = () => {
       const result = await login({ email, password });
       
       console.log('Login result:', result); // Debug log
+      
+      // Ensure result is defined and has expected structure
+      if (!result) {
+        console.error('Login function returned undefined');
+        setError('Login failed. Please try again.');
+        return;
+      }
       
       if (result.success) {
         console.log('User data:', result.user); // Debug log
@@ -231,10 +256,23 @@ const Login = () => {
   const handleOAuthLogin = async (provider) => {
     try {
       setIsLoading(true);
+      
+      // Check if backend is available first
+      try {
+        const testResponse = await fetch('http://127.0.0.1:8000/api/auth/providers');
+        if (!testResponse.ok) {
+          throw new Error('Backend server not available');
+        }
+      } catch (error) {
+        showToast('error', 'Backend server is not running. Please start the Laravel server first.');
+        setIsLoading(false);
+        return;
+      }
+      
       await initiateOAuthFlow(provider, window.location.origin + '/login');
     } catch (error) {
       console.error(`${provider} OAuth error:`, error);
-      showToast('error', `Failed to connect to ${provider}`);
+      showToast('error', `Failed to connect to ${provider}: ${error.message}`);
       setIsLoading(false);
     }
   };
@@ -391,7 +429,7 @@ const Login = () => {
                 <span className="checkbox-custom"></span>
                 <span>Remember me</span>
               </label>
-              <a href="#forgot" className="forgot-link">Forgot password?</a>
+              <Link to="/forgot-password" className="forgot-link">Forgot password?</Link>
             </div>
 
             <button type="submit" className="login-btn" disabled={isLoading}>

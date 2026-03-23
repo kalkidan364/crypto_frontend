@@ -1,0 +1,979 @@
+/* Professional Markets Page - Nexus Style */
+
+.markets-container {
+  width: 100%;
+  height: 100vh;
+  background: #0b0e11;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Market Navigation */
+.market-navigation {
+  padding: 16px 24px;
+  background: #181a20;
+  border-bottom: 1px solid #2b3139;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.market-overview-stats {
+  display: flex;
+  gap: 32px;
+}
+
+.overview-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.overview-label {
+  font-size: 11px;
+  color: #848e9c;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.overview-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.overview-change {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.overview-change.positive { color: #0ecb81; }
+.overview-change.negative { color: #f6465d; }
+.overview-change.neutral { color: #848e9c; }
+
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #848e9c;
+  z-index: 2;
+}
+
+.search-input {
+  width: 240px;
+  padding: 10px 16px 10px 40px;
+  background: #2b3139;
+  border: 1px solid #3c4043;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: #0ecb81;
+}
+
+.search-input::placeholder {
+  color: #848e9c;
+}
+
+.search-filters {
+  display: flex;
+  gap: 6px;
+}
+
+.filter-btn {
+  padding: 6px 12px;
+  background: #2b3139;
+  border: 1px solid #3c4043;
+  border-radius: 6px;
+  color: #848e9c;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  color: #ffffff;
+  border-color: #0ecb81;
+}
+
+.filter-btn.active {
+  background: #0ecb81;
+  color: #000;
+  border-color: #0ecb81;
+}
+
+/* Market Tabs */
+.market-tabs {
+  padding: 12px 24px;
+  background: #181a20;
+  border-bottom: 1px solid #2b3139;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.tabs-left {
+  display: flex;
+  gap: 8px;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #848e9c;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: #ffffff;
+  background: rgba(14, 203, 129, 0.1);
+  border-color: rgba(14, 203, 129, 0.3);
+}
+
+.tab-btn.active {
+  color: #0ecb81;
+  background: rgba(14, 203, 129, 0.15);
+  border-color: rgba(14, 203, 129, 0.4);
+}
+
+.tab-icon {
+  font-size: 16px;
+}
+
+.tab-count {
+  background: rgba(14, 203, 129, 0.2);
+  color: #0ecb81;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tabs-right {
+  display: flex;
+  align-items: center;
+}
+
+.view-toggle {
+  display: flex;
+  background: #2b3139;
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.toggle-btn {
+  padding: 8px;
+  background: transparent;
+  border: none;
+  color: #848e9c;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+  color: #ffffff;
+}
+
+.toggle-btn.active {
+  background: #0ecb81;
+  color: #000;
+}
+
+/* ============================================
+   Main Content Layout - SIDE BY SIDE
+   ============================================ */
+.markets-main {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  overflow: hidden;
+}
+
+.markets-left {
+  flex: 1;
+  background: #0b0e11;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* ============================================
+   Market Table
+   ============================================ */
+.market-table-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0b0e11;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 0.7fr 0.7fr 0.9fr 0.9fr 1.1fr 1fr;
+  padding: 12px 24px;
+  background: #181a20;
+  border-bottom: 1px solid #2b3139;
+  font-size: 11px;
+  color: #848e9c;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-cell {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 4px 0;
+}
+
+.header-cell:hover {
+  color: #ffffff;
+}
+
+.header-cell.no-sort {
+  cursor: default;
+}
+
+.name-header {
+  justify-content: flex-start;
+}
+
+.header-cell:not(.name-header) {
+  justify-content: flex-end;
+}
+
+.sort-icon {
+  margin-left: 4px;
+  transition: transform 0.2s;
+}
+
+.sort-icon.desc {
+  transform: rotate(180deg);
+}
+
+.table-body {
+  flex: 1;
+  overflow-y: auto;
+  background: #0b0e11;
+}
+
+.table-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.table-body::-webkit-scrollbar-track {
+  background: #181a20;
+}
+
+.table-body::-webkit-scrollbar-thumb {
+  background: #2b3139;
+  border-radius: 3px;
+}
+
+.table-body::-webkit-scrollbar-thumb:hover {
+  background: #3c4043;
+}
+
+.market-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 0.7fr 0.7fr 0.9fr 0.9fr 1.1fr 1fr;
+  padding: 12px 24px;
+  border-bottom: 1px solid rgba(43, 49, 57, 0.3);
+  cursor: pointer;
+  transition: all 0.2s;
+  align-items: center;
+  min-height: 56px;
+}
+
+.market-row:hover {
+  background: rgba(14, 203, 129, 0.05);
+}
+
+.market-row.selected {
+  background: rgba(14, 203, 129, 0.1);
+  border-left: 3px solid #0ecb81;
+}
+
+.row-cell {
+  display: flex;
+  align-items: center;
+}
+
+.name-cell {
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.row-cell:not(.name-cell) {
+  justify-content: flex-end;
+}
+
+.rank {
+  font-size: 12px;
+  color: #848e9c;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: center;
+}
+
+.coin-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.coin-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.coin-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.coin-symbol {
+  font-size: 12px;
+  color: #848e9c;
+  font-weight: 500;
+}
+
+.price {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+}
+
+.change {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 4px;
+  text-align: center;
+  min-width: 50px;
+}
+
+.change.positive {
+  color: #0ecb81;
+  background: rgba(14, 203, 129, 0.15);
+}
+
+.change.negative {
+  color: #f6465d;
+  background: rgba(246, 70, 93, 0.15);
+}
+
+.volume, .mcap {
+  font-size: 12px;
+  color: #848e9c;
+  font-weight: 500;
+}
+
+/* Holdings Column */
+.holdings-cell {
+  justify-content: flex-end;
+}
+
+.holdings-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.holdings-amount {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0ecb81;
+}
+
+.holdings-value {
+  font-size: 11px;
+  color: #848e9c;
+  font-weight: 500;
+}
+
+.sparkline-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+}
+
+/* ============================================
+   Right Section - Market Details Sidebar
+   ============================================ */
+.markets-right {
+  width: 300px;
+  min-width: 300px;
+  background: #181a20;
+  border-left: 1px solid #2b3139;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.markets-right::-webkit-scrollbar {
+  width: 4px;
+}
+
+.markets-right::-webkit-scrollbar-track {
+  background: #181a20;
+}
+
+.markets-right::-webkit-scrollbar-thumb {
+  background: #2b3139;
+  border-radius: 2px;
+}
+
+/* Selected Coin Details */
+.coin-details-header {
+  padding: 20px 20px;
+  border-bottom: 1px solid #2b3139;
+  text-align: center;
+}
+
+.coin-details-header h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #848e9c;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.no-coin-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.details-subtitle {
+  font-size: 12px;
+  color: #848e9c;
+}
+
+/* Selected Coin Info */
+.selected-coin-info {
+  text-align: left;
+}
+
+.selected-coin-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.selected-coin-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.selected-coin-meta h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 4px 0;
+  text-transform: none;
+  letter-spacing: 0;
+  text-align: left;
+}
+
+.selected-coin-sym {
+  color: #848e9c;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.selected-coin-price {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.selected-coin-change {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.selected-coin-change.positive {
+  color: #0ecb81;
+  background: rgba(14, 203, 129, 0.15);
+}
+
+.selected-coin-change.negative {
+  color: #f6465d;
+  background: rgba(246, 70, 93, 0.15);
+}
+
+.selected-coin-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.mini-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: rgba(43, 49, 57, 0.5);
+  border-radius: 8px;
+}
+
+.mini-stat-label {
+  font-size: 10px;
+  color: #848e9c;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.mini-stat-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.mini-stat-value.positive { color: #0ecb81; }
+.mini-stat-value.negative { color: #f6465d; }
+
+/* Trending Sidebar */
+.trending-sidebar {
+  padding: 16px 20px;
+  border-bottom: 1px solid #2b3139;
+}
+
+.trending-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.trending-sidebar-header .trending-icon {
+  font-size: 16px;
+}
+
+.trending-sidebar-header span:nth-child(2) {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.trending-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: #0ecb81;
+  background: rgba(14, 203, 129, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: auto;
+  letter-spacing: 0.5px;
+}
+
+.trending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trending-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 8px;
+}
+
+.trending-item:hover {
+  background: rgba(14, 203, 129, 0.05);
+}
+
+.trending-rank {
+  font-size: 11px;
+  color: #848e9c;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+}
+
+.trending-coin-icon {
+  font-size: 18px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(43, 49, 57, 0.6);
+  border-radius: 50%;
+}
+
+.trending-coin-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.trending-coin-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.trending-coin-symbol {
+  font-size: 11px;
+  color: #848e9c;
+  font-weight: 500;
+}
+
+.trending-change {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.trending-change.positive {
+  color: #0ecb81;
+  background: rgba(14, 203, 129, 0.15);
+}
+
+.trending-change.negative {
+  color: #f6465d;
+  background: rgba(246, 70, 93, 0.15);
+}
+
+/* Market Stats Sidebar (Heatmap) */
+.market-stats-sidebar {
+  padding: 16px 20px;
+  border-bottom: 1px solid #2b3139;
+}
+
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.stats-header span:first-child {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.heatmap-time {
+  font-size: 11px;
+  color: #848e9c;
+  font-weight: 500;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.heatmap-cell {
+  padding: 12px 8px;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.heatmap-symbol {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.heatmap-change {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.heatmap-cell.positive .heatmap-change { color: #0ecb81; }
+.heatmap-cell.negative .heatmap-change { color: #f6465d; }
+
+/* Fear & Greed Section */
+.fear-greed-section {
+  padding: 16px 20px;
+  flex: 1;
+}
+
+.fear-greed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.fear-greed-header span:first-child {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.fear-greed-updated {
+  font-size: 11px;
+  color: #848e9c;
+}
+
+.fear-greed-display {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fear-greed-gauge {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.gauge-background {
+  width: 100%;
+  height: 8px;
+  background: #2b3139;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gauge-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f6465d 0%, #f0b90b 50%, #0ecb81 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.fear-greed-value {
+  text-align: center;
+  margin-top: 12px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+}
+
+.fear-greed-number {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0ecb81;
+  line-height: 1;
+}
+
+.fear-greed-label {
+  font-size: 13px;
+  color: #0ecb81;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fear-greed-scale {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scale-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #848e9c;
+  transition: color 0.2s;
+}
+
+.scale-item.active {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.scale-color {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.scale-color.extreme-fear { background: #f6465d; }
+.scale-color.fear { background: #ff8a00; }
+.scale-color.neutral { background: #f0b90b; }
+.scale-color.greed { background: #9acd32; }
+.scale-color.extreme-greed { background: #0ecb81; }
+
+/* Loading and Error States */
+.loading-spinner, .error-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 16px;
+  color: #848e9c;
+}
+
+.error-message {
+  flex-direction: column;
+  gap: 16px;
+}
+
+.retry-btn {
+  padding: 10px 20px;
+  background: #0ecb81;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.retry-btn:hover {
+  background: #0bb574;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 1400px) {
+  .markets-right {
+    width: 260px;
+    min-width: 260px;
+  }
+  
+  .market-overview-stats {
+    gap: 20px;
+  }
+  
+  .overview-value {
+    font-size: 16px;
+  }
+
+  .search-input {
+    width: 200px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .markets-main {
+    flex-direction: column;
+  }
+  
+  .markets-right {
+    width: 100%;
+    min-width: 100%;
+    max-height: 350px;
+    border-left: none;
+    border-top: 1px solid #2b3139;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .trending-sidebar,
+  .market-stats-sidebar,
+  .fear-greed-section,
+  .coin-details-header {
+    min-width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .market-navigation {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .search-input {
+    width: 100%;
+  }
+  
+  .market-overview-stats {
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  
+  .table-header, .market-row {
+    grid-template-columns: 2fr 1fr 0.8fr 1fr;
+  }
+  
+  .header-cell:nth-child(n+5), .row-cell:nth-child(n+5) {
+    display: none;
+  }
+
+  .markets-right {
+    flex-direction: column;
+    max-height: none;
+  }
+}

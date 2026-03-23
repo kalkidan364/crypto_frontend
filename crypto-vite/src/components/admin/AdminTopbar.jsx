@@ -19,45 +19,74 @@ const AdminTopbar = ({ showToast, onToggleSidebar }) => {
   };
 
   return (
-    <div className="admin-topbar">
-      <div className="admin-brand">
-        <div className="admin-logo">N</div>
-        <div className="admin-title">
-          <h1>NEXUS ADMIN</h1>
-          <div className="subtitle">Platform Administration</div>
+    <div className="nexus-admin-header">
+      {/* Mobile hamburger menu */}
+      <button 
+        className="sidebar-toggle mobile-only"
+        onClick={onToggleSidebar}
+        aria-label="Toggle sidebar"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      {/* NEXUS Logo and Brand */}
+      <div className="nexus-brand">
+        <div className="nexus-logo">
+          <span className="nexus-text">NEXUS</span>
+          <span className="nexus-badge">ADMIN</span>
         </div>
       </div>
 
-      <div className="admin-user-info">
-        <div className="admin-stats">
-          <div className="stat-item">
-            <div className="stat-label">Users Online</div>
-            <div className="stat-value">1,247</div>
+      {/* Search Bar */}
+      <div className="nexus-search">
+        <div className="search-container">
+          <span className="search-icon">🔍</span>
+          <input 
+            type="text"
+            placeholder="Search users, transactions, orders..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
+          />
+        </div>
+      </div>
+
+      {/* Right Side - Notifications and User */}
+      <div className="nexus-header-right">
+        {/* Notification Icons */}
+        <div className="notification-icons">
+          <div className="notification-item" onClick={() => showToast('info', 'Messages coming soon')}>
+            <span className="icon">💬</span>
+            <span className="badge">3</span>
           </div>
-          <div className="stat-item">
-            <div className="stat-label">Daily Revenue</div>
-            <div className="stat-value">$48.6K</div>
+          <div className="notification-item" onClick={() => showToast('info', 'Notifications coming soon')}>
+            <span className="icon">🔔</span>
+            <span className="badge">7</span>
           </div>
-          <div className="stat-item">
-            <div className="stat-label">System Status</div>
-            <div className="stat-value" style={{color: 'var(--accent-green)'}}>ONLINE</div>
+          <div className="notification-item" onClick={() => showToast('info', 'Alerts coming soon')}>
+            <span className="icon">⚠️</span>
+            <span className="badge">2</span>
           </div>
         </div>
 
+        {/* User Profile */}
         <div 
-          className="admin-user"
+          className="nexus-user-profile"
           onClick={() => setShowDropdown(!showDropdown)}
-          style={{position: 'relative', cursor: 'pointer'}}
         >
-          <div className="admin-avatar">
-            {user?.name?.charAt(0)?.toUpperCase() || 'SA'}
-          </div>
-          <div className="admin-user-name">
-            {user?.name || 'Super Admin'}
-          </div>
+          <div className="user-avatar">SA</div>
           
           {showDropdown && (
-            <div className="admin-dropdown">
+            <div className="nexus-dropdown">
+              <div className="dropdown-header">
+                <div className="user-info">
+                  <div className="user-name">{user?.name || 'Super Admin'}</div>
+                  <div className="user-role">System Administrator</div>
+                </div>
+              </div>
+              <div className="dropdown-divider"></div>
               <button onClick={() => showToast('info', 'Profile settings coming soon')}>
                 ⚙️ Admin Profile
               </button>
@@ -68,7 +97,7 @@ const AdminTopbar = ({ showToast, onToggleSidebar }) => {
                 📊 Activity Log
               </button>
               <div className="dropdown-divider"></div>
-              <button onClick={handleLogout} style={{color: 'var(--accent-red)'}}>
+              <button onClick={handleLogout} className="logout-btn">
                 🚪 Logout
               </button>
             </div>

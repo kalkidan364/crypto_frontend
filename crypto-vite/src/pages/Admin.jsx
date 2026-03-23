@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import AdminLayout from '../components/admin/AdminLayout';
-import DebugPanel from '../components/admin/DebugPanel';
 import DashboardTab from '../components/admin/tabs/DashboardTab';
 import AnalyticsTab from '../components/admin/tabs/AnalyticsTab';
 import UsersTab from '../components/admin/tabs/UsersTab';
 import KycTab from '../components/admin/tabs/KycTab';
+import WalletManagementTab from '../components/admin/tabs/WalletManagementTab';
 import WalletsTab from '../components/admin/tabs/WalletsTab';
 import DepositsTab from '../components/admin/tabs/DepositsTab';
 import WithdrawalsTab from '../components/admin/tabs/WithdrawalsTab';
@@ -14,13 +14,13 @@ import TradingTab from '../components/admin/tabs/TradingTab';
 import ReferralTab from '../components/admin/tabs/ReferralTab';
 import TicketsTab from '../components/admin/tabs/TicketsTab';
 import SettingsTab from '../components/admin/tabs/SettingsTab';
-import '../styles/components/admin.css';
+import EducationalScamTab from '../components/admin/tabs/EducationalScamTab';
+import '../styles/admin/admin.css';
 
 const Admin = () => {
-  const { user, isAuthenticated, isAdmin, loading } = useAuth();
+  const { isAuthenticated, isAdmin, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [toasts, setToasts] = useState([]);
-  const [showDebug, setShowDebug] = useState(true);
 
   // Show loading while auth is being checked
   if (loading) {
@@ -37,7 +37,7 @@ const Admin = () => {
   // Check if user is authenticated
   if (!isAuthenticated) {
     return (
-      <main className="main-content">
+      <>
         <div className="access-denied">
           <h2>Authentication Required</h2>
           <p>Please login to access the admin panel.</p>
@@ -45,14 +45,14 @@ const Admin = () => {
             Go to Login
           </button>
         </div>
-      </main>
+      </>
     );
   }
 
   // Check if user is admin
   if (!isAdmin) {
     return (
-      <main className="main-content">
+      <>
         <div className="access-denied">
           <h2>Access Denied</h2>
           <p>You don't have permission to access the admin panel.</p>
@@ -61,7 +61,7 @@ const Admin = () => {
             Go to Dashboard
           </button>
         </div>
-      </main>
+      </>
     );
   }
 
@@ -81,7 +81,7 @@ const Admin = () => {
   };
 
   const renderActiveTab = () => {
-    const tabProps = { showToast };
+    const tabProps = { showToast, onTabChange: setActiveTab };
     
     switch (activeTab) {
       case 'dashboard':
@@ -92,6 +92,8 @@ const Admin = () => {
         return <UsersTab {...tabProps} />;
       case 'kyc':
         return <KycTab {...tabProps} />;
+      case 'wallet-management':
+        return <WalletManagementTab {...tabProps} />;
       case 'wallets':
         return <WalletsTab {...tabProps} />;
       case 'deposits':
@@ -108,44 +110,23 @@ const Admin = () => {
         return <TicketsTab {...tabProps} />;
       case 'settings':
         return <SettingsTab {...tabProps} />;
+      case 'educational-scam':
+        return <EducationalScamTab {...tabProps} />;
       default:
         return <DashboardTab {...tabProps} />;
     }
   };
 
   return (
-    <>
-      <AdminLayout 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab}
-        toasts={toasts}
-        onRemoveToast={removeToast}
-        showToast={showToast}
-      >
-        {renderActiveTab()}
-      </AdminLayout>
-      
-      {showDebug && <DebugPanel />}
-      
-      <button
-        onClick={() => setShowDebug(!showDebug)}
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          zIndex: 9998,
-          padding: '10px',
-          background: '#007bff',
-          color: 'white',
-          border: 'none',
-          borderRadius: '5px',
-          cursor: 'pointer',
-          fontSize: '12px'
-        }}
-      >
-        {showDebug ? 'Hide' : 'Show'} Debug
-      </button>
-    </>
+    <AdminLayout 
+      activeTab={activeTab} 
+      onTabChange={setActiveTab}
+      toasts={toasts}
+      onRemoveToast={removeToast}
+      showToast={showToast}
+    >
+      {renderActiveTab()}
+    </AdminLayout>
   );
 };
 

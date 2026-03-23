@@ -56,8 +56,15 @@ const KycTab = ({ showToast }) => {
   };
 
   const filteredRequests = kycRequests.filter(request => {
-    const matchesSearch = request.user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const userName = typeof request.user === 'string' 
+      ? request.user 
+      : request.user?.name || request.user?.email || '';
+    const userEmail = typeof request.email === 'string' 
+      ? request.email 
+      : request.user?.email || '';
+    
+    const matchesSearch = userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         userEmail.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -71,18 +78,28 @@ const KycTab = ({ showToast }) => {
     { key: 'actions', label: 'Actions' }
   ];
 
-  const formatKycRow = (request, index) => ({
-    user: (
-      <div className="user-chip">
-        <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{color: 'var(--bg-primary)'}}>
-          {request.user?.split(' ').map(n => n[0]).join('') || 'U'}
+  const formatKycRow = (request, index) => {
+    const userName = typeof request.user === 'string' 
+      ? request.user 
+      : request.user?.name || request.user?.email || 'Unknown User';
+    const userEmail = typeof request.email === 'string' 
+      ? request.email 
+      : request.user?.email || 'No email';
+    
+    const userInitials = userName.split(' ').map(n => n[0]).join('') || 'U';
+    
+    return {
+      user: (
+        <div className="user-chip">
+          <div className={`ua ${['a','b','c','d','e'][index % 5]}`} style={{color: 'var(--bg-primary)'}}>
+            {userInitials}
+          </div>
+          <div>
+            <div className="uc-name">{userName}</div>
+            <div className="uc-email">{userEmail}</div>
+          </div>
         </div>
-        <div>
-          <div className="uc-name">{request.user}</div>
-          <div className="uc-email">{request.email}</div>
-        </div>
-      </div>
-    ),
+      ),
     document: (
       <span style={{fontFamily: 'var(--mono)', fontSize: '12px'}}>
         {request.document_type}
@@ -125,7 +142,8 @@ const KycTab = ({ showToast }) => {
         )}
       </div>
     )
-  });
+    };
+  };
 
   if (loading) {
     return (

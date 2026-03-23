@@ -18,7 +18,7 @@ export const PORTFOLIO = [
 
 // Navigation items
 export const NAV_ITEMS = {
-  markets: [
+  trading: [
     { id: 'dashboard', label: 'Dashboard', icon: 'grid', active: true },
     { id: 'markets', label: 'Markets', icon: 'chart' },
     { id: 'trade', label: 'Trade', icon: 'dollar', badge: 'NEW', badgeColor: 'green' },
@@ -35,5 +35,17 @@ export const NAV_ITEMS = {
   defi: [
     { id: 'staking', label: 'Staking', icon: 'layers' },
     { id: 'nfts', label: 'NFTs', icon: 'circle' },
+  ],
+  account: [
+    { id: 'security', label: 'Security', icon: 'shield' },
+    { id: 'settings', label: 'Settings', icon: 'settings' },
+  ],
+  // Keep markets for backward compatibility
+  markets: [
+    { id: 'dashboard', label: 'Dashboard', icon: 'grid', active: true },
+    { id: 'markets', label: 'Markets', icon: 'chart' },
+    { id: 'trade', label: 'Trade', icon: 'dollar', badge: 'NEW', badgeColor: 'green' },
+    { id: 'orders', label: 'Orders', icon: 'clock' },
+    { id: 'history', label: 'History', icon: 'clock' },
   ],
 };

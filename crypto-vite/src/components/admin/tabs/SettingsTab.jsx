@@ -13,19 +13,8 @@ const SettingsTab = ({ showToast }) => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/settings', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setSettings(data.settings || mockSettings);
-      } else {
-        setSettings(mockSettings);
-      }
+      // Use mock data since settings API is not implemented yet
+      setSettings(mockSettings);
     } catch (error) {
       console.error('Failed to fetch settings:', error);
       setSettings(mockSettings);
@@ -37,19 +26,8 @@ const SettingsTab = ({ showToast }) => {
 
   const handleSaveSettings = async (section) => {
     try {
-      const response = await fetch(`/api/admin/settings/${section}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(settings[section])
-      });
-
-      if (response.ok) {
-        showToast('success', `${section} settings saved successfully`);
-      }
+      // Settings API not implemented yet, just show success message
+      showToast('success', `${section} settings saved successfully (demo)`);
     } catch (error) {
       console.error(`Failed to save ${section} settings:`, error);
       showToast('success', `${section} settings saved successfully (demo)`);

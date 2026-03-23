@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import OtpVerification from '../auth/OtpVerification';
-import '../../styles/components/security.css';
+import '../../styles/auth/security.css';
+import '../../styles/auth/verification.css';
 
 const VerifiedRoute = ({ children }) => {
   const { isAuthenticated, user, loading, fetchUser } = useAuth();
@@ -13,7 +14,7 @@ const VerifiedRoute = ({ children }) => {
   useEffect(() => {
     const checkEmailVerification = async () => {
       if (!loading && isAuthenticated && user) {
-        // Check if email is verified
+        // Check if email is verified - MANDATORY for all users
         if (!user.email_verified_at) {
           console.log('Email not verified, showing OTP modal');
           setShowOtpModal(true);
@@ -22,20 +23,35 @@ const VerifiedRoute = ({ children }) => {
           if (!otpSent) {
             console.log('Automatically sending OTP for verification');
             try {
-              const { authAPI } = await import('../../utils/api');
-              const result = await authAPI.generateOtp(user.email, 'email', 'email_verification');
-              if (result.success) {
-                console.log('OTP sent successfully');
-                setOtpSent(true);
-                if (result.otp_code) {
-                  console.log('Development OTP:', result.otp_code);
-                  showToast('info', `Development OTP: ${result.otp_code}`);
+              // Check if backend is available first
+              const response = await fetch('http://127.0.0.1:8000/api/auth/user', {
+                headers: {
+                  'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+                  'Accept': 'application/json',
+                }
+              });
+              
+              if (response.ok) {
+                const { authAPI } = await import('../../utils/api');
+                const result = await authAPI.generateOtp(user.email, 'email', 'email_verification');
+                if (result.success) {
+                  console.log('OTP sent successfully');
+                  setOtpSent(true);
+                  if (result.otp_code) {
+                    console.log('Development OTP:', result.otp_code);
+                    showToast('info', `Development OTP: ${result.otp_code}`);
+                  }
+                } else {
+                  console.error('Failed to send OTP:', result.message);
+                  showToast('error', 'Failed to send verification code. Please try again.');
                 }
               } else {
-                console.error('Failed to send OTP:', result.message);
+                console.log('Backend not available, showing manual verification option');
+                showToast('warning', 'Backend server not available. Please ensure the Laravel server is running.');
               }
             } catch (error) {
               console.error('Error sending OTP:', error);
+              showToast('error', 'Unable to connect to server. Please check your connection and try again.');
             }
           }
         }
@@ -61,8 +77,13 @@ const VerifiedRoute = ({ children }) => {
 
   const handleOtpCancel = () => {
     setShowOtpModal(false);
-    // Show warning that verification is required
-    alert('Email verification is required to access your account. Please verify your email to continue.');
+    // Email verification is MANDATORY - redirect to login with clear message
+    alert('Email verification is required to access NEXUS. Please verify your email to continue using our platform.');
+    // Force logout and redirect to login
+    setTimeout(() => {
+      localStorage.removeItem('auth_token');
+      window.location.href = '/login';
+    }, 1000);
   };
 
   const showToast = (type, message) => {
@@ -85,23 +106,38 @@ const VerifiedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Show OTP modal if email not verified
+  // Show OTP modal if email not verified - MANDATORY verification
   if (showOtpModal && user && !user.email_verified_at) {
     return (
       <div className="verification-required-screen">
-        <OtpVerification
-          identifier={user.email}
-          type="email"
-          purpose="email_verification"
-          onSuccess={handleOtpSuccess}
-          onCancel={handleOtpCancel}
-          showToast={showToast}
-        />
+        <div className="verification-overlay">
+          <div className="verification-container">
+            <div className="verification-header">
+              <div className="nexus-logo">
+                <div className="logo-mark">N</div>
+                <div className="logo-text">NEXUS</div>
+              </div>
+              <h2>Email Verification Required</h2>
+              <p>To ensure the security of your account and comply with financial regulations, please verify your email address.</p>
+            </div>
+            <OtpVerification
+              identifier={user.email}
+              type="email"
+              purpose="email_verification"
+              onSuccess={handleOtpSuccess}
+              onCancel={handleOtpCancel}
+              showToast={showToast}
+            />
+            <div className="verification-footer">
+              <p>This verification is required for all NEXUS users to maintain the highest security standards.</p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // Only render children if email is verified
+  // Render children only if email is verified
   if (user && user.email_verified_at) {
     return children;
   }

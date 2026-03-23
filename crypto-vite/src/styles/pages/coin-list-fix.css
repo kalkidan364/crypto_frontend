@@ -1,0 +1,125 @@
+/* Coin List Visibility Fix - Clean Professional Styles */
+
+/* Force visibility for markets column */
+.markets-column {
+  display: flex !important;
+  flex-direction: column !important;
+  background: #161a1e !important;
+  border-radius: 8px !important;
+  min-height: 300px !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Force visibility for markets list */
+.markets-column .markets-list {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  overflow: hidden !important;
+  background: #161a1e !important;
+  min-height: 200px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Force visibility for markets content */
+.markets-column .markets-content {
+  display: block !important;
+  flex: 1 !important;
+  overflow-y: auto !important;
+  background: #161a1e !important;
+  min-height: 200px !important;
+  max-height: 250px !important;
+  padding: 4px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Ensure SimpleCoinList is visible */
+.markets-column .markets-content > div {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100% !important;
+  min-height: 200px !important;
+}
+
+/* Force visibility for SimpleCoinList items */
+.markets-column .markets-content > div > div {
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-bottom: 6px !important;
+  padding: 12px 16px !important;
+  background: #1e2329 !important;
+  border: 1px solid #2b3139 !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  color: #ffffff !important;
+}
+
+/* Hover effects for SimpleCoinList */
+.markets-column .markets-content > div > div:hover {
+  background: #2b3139 !important;
+  transform: translateX(4px) !important;
+  border-color: #3c434c !important;
+}
+
+/* Remove any conflicting display: none or visibility: hidden */
+.markets-column * {
+  display: initial !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Override any hidden classes */
+.markets-column .hidden,
+.markets-column [style*="display: none"],
+.markets-column [style*="visibility: hidden"],
+.markets-column [style*="opacity: 0"] {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Ensure scrollbar is visible */
+.markets-column .markets-content::-webkit-scrollbar {
+  width: 8px !important;
+  background: #2b3139 !important;
+}
+
+.markets-column .markets-content::-webkit-scrollbar-thumb {
+  background: #f0b90b !important;
+  border-radius: 4px !important;
+}
+
+/* Force text to be visible */
+.markets-column * {
+  color: inherit !important;
+  text-shadow: none !important;
+}
+
+/* Specific styles for SimpleCoinList component */
+.markets-column .markets-content {
+  padding: 8px !important;
+}
+
+/* Make sure the SimpleCoinList container is visible */
+.markets-column .markets-content > div[style] {
+  display: block !important;
+  padding: 8px !important;
+  background: transparent !important;
+  min-height: 200px !important;
+}
+
+/* Ensure all child divs in SimpleCoinList are visible */
+.markets-column .markets-content div[style*="display: grid"],
+.markets-column .markets-content div[style*="display: flex"] {
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
